@@ -1,0 +1,300 @@
+==================================================
+STEP 1 — FILE / INTEGRATION EVIDENCE
+==================================================
+FOUND MultiStrategySignalCoordinatorService in src/services/tradingAlgo.ts:31 => import { multiStrategySignalCoordinatorService } from "./MultiStrategySignalCoordinatorService";
+FOUND MultiStrategySignalCoordinatorService in src/services/MultiStrategySignalCoordinatorService.ts:16 => class MultiStrategySignalCoordinatorService {
+FOUND MultiStrategySignalCoordinatorService in src/services/MultiStrategySignalCoordinatorService.ts:41 => export const multiStrategySignalCoordinatorService = new MultiStrategySignalCoordinatorService();
+FOUND MultiStrategySignalCoordinatorService in src/services/MultiStrategySignalCoordinatorService.test.ts:2 => import { multiStrategySignalCoordinatorService } from './MultiStrategySignalCoordinatorService';
+FOUND multiStrategySignalCoordinatorService in src/services/tradingAlgo.ts:31 => import { multiStrategySignalCoordinatorService } from "./MultiStrategySignalCoordinatorService";
+FOUND multiStrategySignalCoordinatorService in src/services/tradingAlgo.ts:676 =>       const coordResult = multiStrategySignalCoordinatorService.coordinate(candidateSignals);
+FOUND multiStrategySignalCoordinatorService in src/services/MultiStrategySignalCoordinatorService.ts:41 => export const multiStrategySignalCoordinatorService = new MultiStrategySignalCoordinatorService();
+FOUND multiStrategySignalCoordinatorService in src/services/MultiStrategySignalCoordinatorService.test.ts:2 => import { multiStrategySignalCoordinatorService } from './MultiStrategySignalCoordinatorService';
+FOUND multiStrategySignalCoordinatorService in src/services/MultiStrategySignalCoordinatorService.test.ts:62 =>         const result = multiStrategySignalCoordinatorService.coordinate(signals);
+FOUND multiStrategySignalCoordinatorService in src/services/MultiStrategySignalCoordinatorService.test.ts:93 =>         const result = multiStrategySignalCoordinatorService.coordinate(signals);
+FOUND multiStrategySignalCoordinatorService in src/services/MultiStrategySignalCoordinatorService.test.ts:126 =>         const result = multiStrategySignalCoordinatorService.coordinate(signals);
+FOUND coordinate( in src/services/tradingAlgo.ts:676 =>       const coordResult = multiStrategySignalCoordinatorService.coordinate(candidateSignals);
+FOUND coordinate( in src/services/MultiStrategySignalCoordinatorService.ts:17 =>     public coordinate(signals: TradingSignal[]): SignalCoordinationResult {
+FOUND coordinate( in src/services/MultiStrategySignalCoordinatorService.test.ts:62 =>         const result = multiStrategySignalCoordinatorService.coordinate(signals);
+FOUND coordinate( in src/services/MultiStrategySignalCoordinatorService.test.ts:93 =>         const result = multiStrategySignalCoordinatorService.coordinate(signals);
+FOUND coordinate( in src/services/MultiStrategySignalCoordinatorService.test.ts:126 =>         const result = multiStrategySignalCoordinatorService.coordinate(signals);
+FOUND candidateSignals in src/services/tradingAlgo.ts:490 =>   const candidateSignals: TradingSignal[] = [];
+FOUND candidateSignals in src/services/tradingAlgo.ts:655 =>           candidateSignals.push(sig);
+FOUND candidateSignals in src/services/tradingAlgo.ts:675 =>   if (candidateSignals.length > 0) {
+FOUND candidateSignals in src/services/tradingAlgo.ts:676 =>       const coordResult = multiStrategySignalCoordinatorService.coordinate(candidateSignals);
+FOUND finalSignals[0] in src/services/tradingAlgo.ts:678 =>           signal = coordResult.finalSignals[0];
+FOUND finalSignals[0] in src/services/MultiStrategySignalCoordinatorService.test.ts:103 =>         expect(result.finalSignals[0].id).toBe('s2'); // s2 got accepted by overlay
+FOUND finalSignals[0] in src/services/MultiStrategySignalCoordinatorService.test.ts:137 =>         expect(result.finalSignals[0].id).toBe('s1');
+FOUND generateSignal( in src/services/tradingAlgo.ts:62 => export const generateSignal = (
+FOUND generateSignal( in src/services/tradingAlgo.test.ts:2 => import { generateSignal } from './tradingAlgo';
+FOUND generateSignal( in src/services/tradingAlgo.test.ts:21 =>     const result = generateSignal(
+FOUND generateSignal( in src/services/tradingAlgo.test.ts:55 =>     const result = generateSignal(
+FOUND generateSignal( in src/services/tradingAlgo.test.ts:103 =>     const result = generateSignal(
+FOUND generateSignal( in src/services/tradingAlgo.test.ts:160 =>     const result = generateSignal(
+FOUND generateSignal( in src/services/tradingAlgo.test.ts:196 =>     const result = generateSignal(
+FOUND generateSignal( in src/services/tradingAlgo.test.ts:223 =>     const result = generateSignal(
+FOUND generateSignal( in src/services/tradingAlgo.test.ts:265 =>     const result = generateSignal(
+FOUND generateSignal( in src/quant/decisionEngine.ts:24 =>         const action = strategyArchitect.generateSignal(prices, strategyType, gates, ofiValue);
+FOUND generateSignal( in src/App.tsx:743 =>             const { signal: rawSignal, analysis } = generateSignal(
+FOUND break; in src/services/tradingAlgo.ts:512 =>         break;
+FOUND break; in src/services/tradingAlgo.ts:516 =>         break;
+FOUND break; in src/services/tradingAlgo.ts:521 =>         break;
+FOUND break; in src/services/tradingAlgo.ts:525 =>         break;
+FOUND break; in src/services/tradingAlgo.ts:529 =>         break;
+FOUND break; in src/services/tradingAlgo.ts:533 =>         break;
+FOUND break; in src/services/tradingAlgo.ts:537 =>         break;
+FOUND recordCoordinationRun in src/services/DiagnosticsService.ts:202 =>     public recordCoordinationRun(inputCount: number, finalCount: number) {
+FOUND recordCoordinationRun in src/services/MultiStrategySignalCoordinatorService.ts:30 =>         diagnosticsService.recordCoordinationRun(signals.length, finalSignals.length);
+
+==================================================
+STEP 2 — RAW CODE EXCERPTS
+==================================================
+--- FILE: src/services/tradingAlgo.ts (LINES 1-140) ---
+import { executionQualityEngine, ExecutionQualityInput } from './ExecutionQualityEngine';
+import { BaseStrategy } from "./strategies/BaseStrategy";
+import { logStructured } from "../utils/logger";
+import {
+  TradingSignal,
+  SignalDirection,
+  SignalStrength,
+  DeribitBookSummary,
+  DeribitCandleData,
+  DeribitOrderBook,
+  MarketAnalysisState,
+  AppConfig,
+  StrategyType,
+  CVDData,
+  LiquidityData,
+} from "../types";
+import { StrategyOrchestrator } from "./StrategyOrchestrator";
+import { getStrategyInstance } from "./strategies/StrategyRegistry";
+import { detectRegime } from "./regimeDetector";
+import { checkPortfolioRisk } from "./portfolioRisk";
+import { mean, stdDev } from "./trading/mathUtils";
+import { calculateEMA, calculateFisherTransform, calculateGarmanKlassVolatility, calculateHurst, calculateVWAP, calculateVWAPBands, detectLiquiditySweep as detectSweepAdvanced, calculateADR } from "./trading/indicators";
+import { statisticalSignificanceTest, calculateKelly, detectRSIDivergence, detectFVG, detectLiquiditySweep } from "./trading/signalUtils";
+import { analyzeOrderFlow, MarketData } from "./orderFlowEngine";
+import { diagnosticsService } from "./DiagnosticsService";
+import { multiStrategySignalCoordinatorService } from "./MultiStrategySignalCoordinatorService";
+import { tradingControlService } from "./TradingControlService";
+
+/**
+ * ARKON Quant Terminal - Institutional Grade Trading Algorithm
+ * Version: 2.0.0-INSTITUTIONAL
+ *
+ * This module implements an advanced quantitative trading strategy for crypto derivatives.
+ * It uses a multi-gate validation system, statistical significance tests, and market regime detection.
+ */
+const globalCandleCache: Record<string, DeribitCandleData> = {};
+const COINT_WINDOW = 50;
+const MIN_COINT_HISTORY = 30;
+const COINT_EPSILON = 1e-8;
+
+// --- Institutional Strategy Calculations ---
+
+import { Trade } from './TradeBuffer';
+export const calculateCVD = (prevCVD: number, buyVol: number, sellVol: number): CVDData => {
+    const delta = buyVol - sellVol;
+    const currentCVD = prevCVD + delta;
+    const trend = currentCVD > prevCVD ? 'RISING' : currentCVD < prevCVD ? 'FALLING' : 'FLAT';
+    return { currentCVD, previousCVD: prevCVD, delta, trend };
+};
+
+export const calculateLiquidityImbalance = (bidVol: number, askVol: number): LiquidityData => {
+    const imbalance = (bidVol - askVol) / (bidVol + askVol || 1);
+    const signal = imbalance > 0.2 ? 'BUY' : imbalance < -0.2 ? 'SELL' : 'NEUTRAL';
+    return { orderBookImbalance: imbalance, liquidityPools: [], signal };
+};
+
+export const calculateMeanReversion = (price: number, ma: number): number => {
+    return (price - ma) / ma;
+};
+
+export const generateSignal = (
+  asset: string,
+  summary: DeribitBookSummary,
+  allSummaries: DeribitBookSummary[],
+  activeEvent: any | null,
+  candles15M: DeribitCandleData | null,
+  candles1D: DeribitCandleData | null,
+  orderBook: DeribitOrderBook | null,
+  dvol: number,
+  optionsVolume: number,
+  config: AppConfig,
+  recentTrades: Trade[] = [],
+): { signal: TradingSignal | null; analysis: MarketAnalysisState } => {
+  const price = summary.last || 0;
+  
+  // DIAGNOSTICS: Market Data Health
+  const hasOrderBook = orderBook !== null;
+  const hasTradeFlow = !!(orderBook && (orderBook as any).bids && (orderBook as any).asks); // Basic check or check if recentTrades exist
+  const isDegraded = orderBook === null || recentTrades.length === 0 || !!config.hunterMode;
+  diagnosticsService.recordMarketDataHealth(summary.instrument_name, hasOrderBook, recentTrades.length > 0, isDegraded);
+  
+  if (isDegraded && !config.hunterMode) {
+      tradingControlService.recordDegradedData();
+  }
+
+  const fundingRate = summary.funding_8h || 0;
+
+  // 1. Data Preparation
+  const dailyCloses = (candles1D && Array.isArray(candles1D.close)) ? candles1D.close : [];
+  const m15Closes = (candles15M && Array.isArray(candles15M.close)) ? candles15M.close : [];
+  const m15Opens = (candles15M && Array.isArray(candles15M.open)) ? candles15M.open : m15Closes;
+  const m15Highs = (candles15M && Array.isArray(candles15M.high)) ? candles15M.high : [];
+  const m15Lows = (candles15M && Array.isArray(candles15M.low)) ? candles15M.low : [];
+  const m15Volumes = (candles15M && Array.isArray(candles15M.volume)) ? candles15M.volume : [];
+
+--- FILE: src/services/MultiStrategySignalCoordinatorService.ts (LINES 1-140) ---
+import { TradingSignal } from '../types';
+import { portfolioRiskOverlayService, OverlayDecision } from './PortfolioRiskOverlayService';
+import { strategyArbitrationService, ArbitrationResult } from './StrategyArbitrationService';
+import { diagnosticsService } from './DiagnosticsService';
+
+export type SignalCoordinationResult = {
+    inputSignals: TradingSignal[];
+    overlayDecisions: OverlayDecision[];
+    arbitrationResult: ArbitrationResult;
+    finalSignals: TradingSignal[];
+};
+
+class MultiStrategySignalCoordinatorService {
+
+    public coordinate(signals: TradingSignal[]): SignalCoordinationResult {
+        // 1. Pass all signals through the portfolio risk overlay
+        const overlayDecisions = portfolioRiskOverlayService.evaluateSignals(signals);
+        
+        // 2. Filter out suppressed signals from the overlay
+        const signalsPassingOverlay = overlayDecisions
+            .filter(decision => !decision.suppressed)
+            .map(decision => decision.originalSignal);
+
+        // 3. Pass remaining signals through strategy arbitration
+        const arbitrationResult = strategyArbitrationService.arbitrate(signalsPassingOverlay);
+
+        // 4. Extract final signals
+        const finalSignals = arbitrationResult.selectedSignals.map(decision => decision.signal);
+
+        // 5. Diagnostics
+        diagnosticsService.recordCoordinationRun(signals.length, finalSignals.length);
+
+        return {
+            inputSignals: signals,
+            overlayDecisions,
+            arbitrationResult,
+            finalSignals
+        };
+    }
+}
+
+export const multiStrategySignalCoordinatorService = new MultiStrategySignalCoordinatorService();
+
+--- FILE: src/services/tradingAlgo.ts (LINES 630-698) ---
+      // Strategy passed, generate signal
+      const analysisState: MarketAnalysisState = {
+          ...partialState,
+          qualityScore: validation.score,
+      };
+      const sig = strategyInstance.execute(analysisState, config);
+      
+      // استخدام الـ Threshold المطلوب في الإعدادات (config) لجميع الأصول
+      // INTENT DOCS:
+      // خفض صرامة التقييم هنا (عبر خصم 20 نقطة في الـ hunterMode) هو سلوك متعمد بالكامل
+      // وليس خطأ برمجياً (Not a bug). الهدف منه زيادة مرونة الشبكة (Grid Hunter) 
+      // ورفع معدل الصفقات (trade frequency) حسب المتفق عليه.
+      // تحذير: أي تغيير في هذه المعادلة لزيادة الصرامة سيؤدي فوراً لكسر السلوك المتفق عليه
+      // وتقليل عدد الصفقات المربحة ضمن نظام الشبكة.
+      const executionThreshold = config.hunterMode 
+          ? Math.max(0, (config.minSignalScore || 80) - 20) 
+          : (config.minSignalScore || 80);
+      
+      if (sig && validation.score >= executionThreshold) {
+          sig.qualityScore = validation.score;
+          sig.reasoning = `${config.hunterMode ? 'HUNTER SCALP' : rankedStrat.reason} | ${sig.reasoning}`;
+          candidateSignals.push(sig);
+          
+          logStructured('QUANT', 'INFO', 'signal_candidate', `[${asset}] [Strategy: ${strategyType}] CANDIDATE signal generated (Score: ${validation.score}, Config Threshold: ${executionThreshold}, Hunter: ${config.hunterMode})`, {
+            asset,
+            strategy: strategyType,
+            score: validation.score,
+            threshold: executionThreshold,
+            hunterMode: config.hunterMode
+          });
+      } else if (sig) {
+          logStructured('QUANT', 'WARN', 'signal_rejected_low_score', `[${asset}] [Strategy: ${strategyType}] Signal generated but rejected for low score. Score: ${validation.score}, Required: ${executionThreshold}`, {
+            asset,
+            strategy: strategyType,
+            score: validation.score,
+            threshold: executionThreshold,
+            reason: 'SCORE_BELOW_THRESHOLD'
+          });
+      }
+  }
+
+  if (candidateSignals.length > 0) {
+      const coordResult = multiStrategySignalCoordinatorService.coordinate(candidateSignals);
+      if (coordResult.finalSignals.length > 0) {
+          signal = coordResult.finalSignals[0];
+          strategy = signal.strategy as StrategyType;
+          direction = signal.direction;
+          reasoning = signal.reasoning || "";
+          qualityScore = signal.qualityScore || 0;
+          primaryBlocker = "ALPHA LOCKED 🎯";
+          
+          logStructured('QUANT', 'INFO', 'signal_accepted', `[${asset}] [Strategy: ${strategy}] SELECTED as final coordinated signal (Score: ${qualityScore})`, {
+            asset,
+            strategy,
+            score: qualityScore
+          });
+      }
+  }
+
+  if (!signal) {
+      qualityScore = maxValidationScore;
+  }
+
+==================================================
+STEP 3 — EXECUTION SAFEGUARD EVIDENCE
+==================================================
+FOUND PreTradeRiskGuard in src/services/ExecutionOrchestrator.test.ts:3 => import { preTradeRiskGuard } from './PreTradeRiskGuard';
+FOUND PreTradeRiskGuard in src/services/PreTradeRiskGuard.ts:52 => export class PreTradeRiskGuard {
+FOUND PreTradeRiskGuard in src/services/PreTradeRiskGuard.ts:152 => export const preTradeRiskGuard = new PreTradeRiskGuard();
+FOUND PreTradeRiskGuard in src/services/PreTradeRiskGuard.test.ts:2 => import { preTradeRiskGuard, PreTradeRiskSnapshot } from './PreTradeRiskGuard';
+FOUND PreTradeRiskGuard in src/services/PreTradeRiskGuard.test.ts:5 => describe('PreTradeRiskGuard', () => {
+FOUND PreTradeRiskGuard in src/services/ExecutionOrchestrator.ts:1 => import { preTradeRiskGuard } from './PreTradeRiskGuard';
+FOUND RiskLimitsService in src/services/TradingControlService.ts:2 => import { riskLimitsService } from './RiskLimitsService';
+FOUND RiskLimitsService in src/services/PreTradeRiskGuard.ts:3 => import { riskLimitsService } from './RiskLimitsService';
+FOUND RiskLimitsService in src/services/ExecutionOrchestrator.ts:2 => import { riskLimitsService } from './RiskLimitsService';
+FOUND TradingControlService in src/services/TradingControlService.ts:15 => class TradingControlService {
+FOUND TradingControlService in src/services/TradingControlService.ts:133 => export const tradingControlService = new TradingControlService();
+FOUND TradingControlService in src/services/ExecutionOrchestrator.ts:3 => import { tradingControlService } from './TradingControlService';
+FOUND TradingControlService in src/services/tradingAlgo.ts:32 => import { tradingControlService } from "./TradingControlService";
+FOUND ExecutionOrchestrator in src/services/ExecutionOrchestrator.test.ts:2 => import { ExecutionOrchestrator } from './ExecutionOrchestrator';
+FOUND ExecutionOrchestrator in src/services/ExecutionOrchestrator.test.ts:5 => describe('ExecutionOrchestrator - Execution Quality', () => {
+FOUND ExecutionOrchestrator in src/services/ExecutionOrchestrator.test.ts:16 =>         const orchestrator = new ExecutionOrchestrator(config, true, mockLog);
+FOUND ExecutionOrchestrator in src/services/ExecutionOrchestrator.test.ts:53 =>         const orchestrator = new ExecutionOrchestrator(config, true, mockLog);
+FOUND ExecutionOrchestrator in src/services/ExecutionOrchestrator.test.ts:87 =>         const orchestrator = new ExecutionOrchestrator(config, true, mockLog);
+FOUND ExecutionOrchestrator in src/services/ExecutionOrchestrator.test.ts:121 =>         const orchestrator = new ExecutionOrchestrator(config, true, mockLog);
+FOUND ExecutionOrchestrator in src/services/ExecutionOrchestrator.ts:10 => export class ExecutionOrchestrator {
+FOUND ExecutionOrchestrator in src/App.tsx:26 => import { ExecutionOrchestrator } from "./services/ExecutionOrchestrator";
+FOUND ExecutionOrchestrator in src/App.tsx:528 =>     () => new ExecutionOrchestrator(config, bridgeStatus, addLog),
+
+==================================================
+STEP 4 — TEST EVIDENCE
+==================================================
+> arkon-trading-app@50.0.0 test
+> vitest src/services/tradingAlgo.test.ts
+
+ ✓ src/services/tradingAlgo.test.ts (7 tests) 32ms
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  09:28:57
+   Duration  810ms (transform 405ms, setup 0ms, import 502ms, tests 32ms, environment 0ms)
+
+> arkon-trading-app@50.0.0 test
+> vitest src/services/ExecutionOrchestrator.test.ts
+
+ ✓ src/services/ExecutionOrchestrator.test.ts (4 tests) 14ms
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  09:28:59
+   Duration  496ms (transform 183ms, setup 0ms, import 223ms, tests 14ms, environment 0ms)

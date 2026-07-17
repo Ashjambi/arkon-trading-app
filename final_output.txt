@@ -1,0 +1,36 @@
+1. Files inspected
+- src/services/DiagnosticsService.ts
+- src/services/MultiStrategySignalCoordinatorService.ts
+- server.ts
+
+2. Files added/changed
+- ADDED: src/services/CoordinationTraceService.ts
+- ADDED: src/services/CoordinationTraceService.test.ts
+- MODIFIED: src/services/MultiStrategySignalCoordinatorService.ts
+- MODIFIED: server.ts
+
+3. Exact implementation summary
+- Created `CoordinationTraceSnapshot` type and `CoordinationTraceService` with a memory-backed `latestSnapshot` state.
+- Added `getLatestSnapshot()` and `updateSnapshot(inputSignals, overlayDecisions, arbitrationResult, finalSignals)` methods to the service.
+- Injected `coordinationTraceService.updateSnapshot(...)` into `MultiStrategySignalCoordinatorService.coordinate()` right before returning the result.
+- Modified `server.ts` to expose the snapshot on the `GET /api/diagnostics/coordination-trace` endpoint.
+- Added full unit tests in `CoordinationTraceService.test.ts` to verify initialization, updates, and data integrity.
+
+4. Test execution result
+> arkon-trading-app@50.0.0 test
+> vitest src/services/CoordinationTraceService.test.ts
+
+ ✓ src/services/CoordinationTraceService.test.ts (2 tests) 8ms
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  09:45:06
+   Duration  351ms (transform 51ms, setup 0ms, import 73ms, tests 8ms, environment 0ms)
+
+> arkon-trading-app@50.0.0 test
+> vitest src/services/MultiStrategySignalCoordinatorService.test.ts
+
+ ✓ src/services/MultiStrategySignalCoordinatorService.test.ts (3 tests) 10ms
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  09:45:07
+   Duration  476ms (transform 133ms, setup 0ms, import 167ms, tests 10ms, environment 0ms)

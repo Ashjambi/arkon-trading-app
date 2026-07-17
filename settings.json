@@ -1,0 +1,6 @@
+{
+  "forceClosePnL": 0.5,
+  "enableTelegramAlerts": true,
+  "telegramBotToken": "",
+  "telegramChatId": ""
+}
