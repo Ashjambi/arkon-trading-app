@@ -1,6 +1,20 @@
 import { logStructured } from '../utils/logger';
 import { riskLimitsService } from './RiskLimitsService';
 
+export interface PerAssetControlState {
+  autoBlocked: boolean;
+  reducedRiskMode: boolean;
+  cooldownActive: boolean;
+  cooldownUntil: string | null;
+  lastBlockReason: string | null;
+  recentTriggers: {
+    degradedDataBursts: number;
+    executionSkipBursts: number;
+    executionDelayBursts: number;
+    toxicityBursts: number;
+  };
+}
+
 export interface TradingControlSnapshot {
   manualKillSwitch: boolean;
   autoBlocked: boolean;
@@ -15,192 +29,201 @@ export interface TradingControlSnapshot {
     executionDelayBursts: number;
     toxicityBursts: number;
   };
-  thresholds: {
-    maxSequentialSkips: number;
-    maxSequentialDelays: number;
-    maxDegradedDataEvents: number;
-    cooldownMs: number;
-  };
-  updatedAt: string;
+  assetStates?: Record<string, PerAssetControlState>;
 }
 
-export class TradingControlService {
-    private snapshot: TradingControlSnapshot;
+// Constants for burst thresholds
+const BURST_THRESHOLD = 3;
+const BURST_WINDOW_MS = 60000;
+const COOLDOWN_MS = 300000;
 
-    constructor() {
-        this.snapshot = this.getInitialSnapshot();
+function createDefaultPerAssetState(): PerAssetControlState {
+  return {
+    autoBlocked: false,
+    reducedRiskMode: false,
+    cooldownActive: false,
+    cooldownUntil: null,
+    lastBlockReason: null,
+    recentTriggers: {
+      degradedDataBursts: 0,
+      executionSkipBursts: 0,
+      executionDelayBursts: 0,
+      toxicityBursts: 0,
+    },
+  };
+}
+
+class TradingControlService {
+  private manualKillSwitch = false;
+  private assetStates: Map<string, PerAssetControlState> = new Map();
+  private assetBurstResetTimes: Map<string, number> = new Map();
+  private lastMode: 'NORMAL' | 'REDUCED' | 'BLOCKED' = 'NORMAL';
+
+  private getAssetState(asset?: string): PerAssetControlState {
+    const key = asset || 'GLOBAL';
+    if (!this.assetStates.has(key)) {
+      this.assetStates.set(key, createDefaultPerAssetState());
+    }
+    return this.assetStates.get(key)!;
+  }
+
+  private resetBurstCountersIfNeeded(asset?: string): void {
+    const key = asset || 'GLOBAL';
+    const now = Date.now();
+    if (!this.assetBurstResetTimes.has(key)) {
+      this.assetBurstResetTimes.set(key, now);
+      return;
+    }
+    const lastReset = this.assetBurstResetTimes.get(key)!;
+    if (now - lastReset > BURST_WINDOW_MS) {
+      const state = this.getAssetState(asset);
+      state.recentTriggers.degradedDataBursts = 0;
+      state.recentTriggers.executionSkipBursts = 0;
+      state.recentTriggers.executionDelayBursts = 0;
+      state.recentTriggers.toxicityBursts = 0;
+      this.assetBurstResetTimes.set(key, now);
+    }
+  }
+
+  public evaluateControlState(asset?: string): 'NORMAL' | 'REDUCED' | 'BLOCKED' {
+    if (this.manualKillSwitch) {
+      this.lastMode = 'BLOCKED';
+      const state = this.getAssetState(asset);
+      state.autoBlocked = true;
+      state.lastBlockReason = 'Manual Kill Switch Active';
+      return 'BLOCKED';
     }
 
-    private getInitialSnapshot(): TradingControlSnapshot {
-        return {
-            manualKillSwitch: false,
-            autoBlocked: false,
-            reducedRiskMode: false,
-            cooldownActive: false,
-            cooldownUntil: null,
-            lastBlockReason: null,
-            lastMode: 'NORMAL',
-            recentTriggers: {
-                degradedDataBursts: 0,
-                executionSkipBursts: 0,
-                executionDelayBursts: 0,
-                toxicityBursts: 0,
-            },
-            thresholds: {
-                maxSequentialSkips: 3,
-                maxSequentialDelays: 5,
-                maxDegradedDataEvents: 10,
-                cooldownMs: 5 * 60 * 1000, // 5 minutes
-            },
-            updatedAt: new Date().toISOString()
-        };
+    this.resetBurstCountersIfNeeded(asset);
+    const state = this.getAssetState(asset);
+
+    // Check cooldown
+    if (state.cooldownActive && state.cooldownUntil) {
+      if (Date.now() < new Date(state.cooldownUntil).getTime()) {
+        this.lastMode = 'BLOCKED';
+        return 'BLOCKED';
+      }
+      // Cooldown expired
+      state.cooldownActive = false;
+      state.cooldownUntil = null;
+      state.autoBlocked = false;
+      state.lastBlockReason = null;
     }
 
-    public getSnapshot(): TradingControlSnapshot {
-        this.evaluateControlState(); // ensure cooldowns expire if time passed
-        this.snapshot.updatedAt = new Date().toISOString();
-        return JSON.parse(JSON.stringify(this.snapshot));
+    // Check per-asset auto-block
+    if (state.autoBlocked) {
+      this.lastMode = 'BLOCKED';
+      return 'BLOCKED';
     }
 
-    public setManualKillSwitch(active: boolean): void {
-        this.snapshot.manualKillSwitch = active;
-        this.snapshot.lastBlockReason = active ? 'Manual kill switch activated' : null;
-        this.evaluateControlState();
-        
-        logStructured('SYSTEM', active ? 'WARN' : 'INFO', 'manual_kill_switch', `Kill switch is now ${active ? 'ON' : 'OFF'}`, {
-            active
-        });
+    // Burst-level detection (per asset)
+    const totalBursts =
+      state.recentTriggers.degradedDataBursts +
+      state.recentTriggers.executionSkipBursts +
+      state.recentTriggers.executionDelayBursts +
+      state.recentTriggers.toxicityBursts;
+
+    if (state.autoBlocked || totalBursts >= BURST_THRESHOLD * 2) {
+      this.lastMode = 'BLOCKED';
+      return 'BLOCKED';
     }
 
-    public reset(): void {
-        const killSwitch = this.snapshot.manualKillSwitch;
-        this.snapshot = this.getInitialSnapshot();
-        this.snapshot.manualKillSwitch = killSwitch; // keep kill switch state
-        logStructured('SYSTEM', 'INFO', 'trading_control_reset', 'Trading control state has been reset');
+    if (state.reducedRiskMode || totalBursts >= BURST_THRESHOLD) {
+      this.lastMode = 'REDUCED';
+      return 'REDUCED';
     }
 
-    public recordExecutionSkip(): void {
-        this.snapshot.recentTriggers.executionSkipBursts++;
-        this.snapshot.recentTriggers.executionDelayBursts = 0; // reset delay burst?
-        this.evaluateControlState();
+    this.lastMode = 'NORMAL';
+    return 'NORMAL';
+  }
+
+  public recordDegradedData(asset?: string): void {
+    const state = this.getAssetState(asset);
+    state.recentTriggers.degradedDataBursts++;
+    if (state.recentTriggers.degradedDataBursts >= BURST_THRESHOLD) {
+      state.autoBlocked = true;
+      state.lastBlockReason = `Degraded data bursts reached threshold for ${asset || 'GLOBAL'}`;
+      logStructured('SYSTEM', 'WARN', 'control_block', state.lastBlockReason);
+      this.startCooldown(asset);
     }
+  }
 
-    public recordExecutionDelay(): void {
-        this.snapshot.recentTriggers.executionDelayBursts++;
-        this.evaluateControlState();
+  public recordExecutionSkip(asset?: string): void {
+    const state = this.getAssetState(asset);
+    state.recentTriggers.executionSkipBursts++;
+    if (state.recentTriggers.executionSkipBursts >= BURST_THRESHOLD) {
+      state.autoBlocked = true;
+      state.lastBlockReason = `Execution skip bursts reached threshold for ${asset || 'GLOBAL'}`;
+      logStructured('SYSTEM', 'WARN', 'control_block', state.lastBlockReason);
+      this.startCooldown(asset);
     }
+  }
 
-    public recordDegradedData(): void {
-        this.snapshot.recentTriggers.degradedDataBursts++;
-        this.evaluateControlState();
+  public recordExecutionDelay(asset?: string): void {
+    const state = this.getAssetState(asset);
+    state.recentTriggers.executionDelayBursts++;
+    if (state.recentTriggers.executionDelayBursts >= BURST_THRESHOLD) {
+      state.reducedRiskMode = true;
+      state.lastBlockReason = `Execution delay bursts reached threshold for ${asset || 'GLOBAL'}`;
+      logStructured('SYSTEM', 'WARN', 'control_reduced', state.lastBlockReason);
     }
+  }
 
-    public recordToxicity(): void {
-        this.snapshot.recentTriggers.toxicityBursts++;
-        this.evaluateControlState();
+  public recordNormalExecution(asset?: string): void {
+    const state = this.getAssetState(asset);
+    // Gradually decrease burst counters on normal execution
+    state.recentTriggers.degradedDataBursts = Math.max(0, state.recentTriggers.degradedDataBursts - 1);
+    state.recentTriggers.executionSkipBursts = Math.max(0, state.recentTriggers.executionSkipBursts - 1);
+    state.recentTriggers.executionDelayBursts = Math.max(0, state.recentTriggers.executionDelayBursts - 1);
+    state.recentTriggers.toxicityBursts = Math.max(0, state.recentTriggers.toxicityBursts - 1);
+  }
+
+  public startCooldown(asset?: string): void {
+    const state = this.getAssetState(asset);
+    state.cooldownActive = true;
+    state.cooldownUntil = new Date(Date.now() + COOLDOWN_MS).toISOString();
+    state.autoBlocked = true;
+    state.lastBlockReason = `Cooldown activated for ${asset || 'GLOBAL'} until ${state.cooldownUntil}`;
+    logStructured('SYSTEM', 'WARN', 'control_cooldown', state.lastBlockReason);
+  }
+
+  public getSnapshot(): TradingControlSnapshot {
+    const globalState = this.getAssetState();
+    const assetStates: Record<string, PerAssetControlState> = {};
+    for (const [key, state] of this.assetStates.entries()) {
+      assetStates[key] = { ...state, recentTriggers: { ...state.recentTriggers } };
     }
+    return {
+      manualKillSwitch: this.manualKillSwitch,
+      autoBlocked: globalState.autoBlocked,
+      reducedRiskMode: globalState.reducedRiskMode,
+      cooldownActive: globalState.cooldownActive,
+      cooldownUntil: globalState.cooldownUntil,
+      lastBlockReason: globalState.lastBlockReason,
+      lastMode: this.lastMode,
+      recentTriggers: { ...globalState.recentTriggers },
+      assetStates,
+    };
+  }
 
-    public recordNormalExecution(): void {
-        if (!this.snapshot.cooldownActive && !this.snapshot.manualKillSwitch) {
-            // Decay or reset bursts on successful normal execution
-            this.snapshot.recentTriggers.executionSkipBursts = 0;
-            this.snapshot.recentTriggers.executionDelayBursts = 0;
-            this.snapshot.recentTriggers.degradedDataBursts = 0;
-            this.snapshot.recentTriggers.toxicityBursts = 0;
-            this.evaluateControlState();
-        }
+  public setManualKillSwitch(value: boolean): void {
+    this.manualKillSwitch = value;
+    if (!value) {
+      // Clear the auto-block flag that was set on the global state while the kill switch was active.
+      const state = this.getAssetState();
+      if (state.lastBlockReason === 'Manual Kill Switch Active') {
+        state.autoBlocked = false;
+        state.lastBlockReason = null;
+      }
     }
+  }
 
-    public evaluateControlState(): 'NORMAL' | 'REDUCED' | 'BLOCKED' {
-        let mode: 'NORMAL' | 'REDUCED' | 'BLOCKED' = 'NORMAL';
-        let blockReason = null;
-        let autoBlocked = false;
-        let reducedRiskMode = false;
-        const now = Date.now();
-
-        // 1. Check Cooldown Expiry
-        if (this.snapshot.cooldownActive && this.snapshot.cooldownUntil) {
-            const until = new Date(this.snapshot.cooldownUntil).getTime();
-            if (now >= until) {
-                this.snapshot.cooldownActive = false;
-                this.snapshot.cooldownUntil = null;
-                // Reset bursts after cooldown
-                this.snapshot.recentTriggers.executionSkipBursts = 0;
-                this.snapshot.recentTriggers.executionDelayBursts = 0;
-                this.snapshot.recentTriggers.degradedDataBursts = 0;
-                this.snapshot.recentTriggers.toxicityBursts = 0;
-            }
-        }
-
-        // 2. Evaluate Triggers
-        if (this.snapshot.recentTriggers.executionSkipBursts >= this.snapshot.thresholds.maxSequentialSkips) {
-            if (!this.snapshot.cooldownActive) {
-                this.snapshot.cooldownActive = true;
-                this.snapshot.cooldownUntil = new Date(now + this.snapshot.thresholds.cooldownMs).toISOString();
-            }
-            autoBlocked = true;
-            blockReason = `Auto-cooldown: Skip burst threshold reached (${this.snapshot.recentTriggers.executionSkipBursts})`;
-        } else if (
-            this.snapshot.recentTriggers.degradedDataBursts >= this.snapshot.thresholds.maxDegradedDataEvents &&
-            this.snapshot.recentTriggers.executionSkipBursts > 0
-        ) {
-             if (!this.snapshot.cooldownActive) {
-                this.snapshot.cooldownActive = true;
-                this.snapshot.cooldownUntil = new Date(now + this.snapshot.thresholds.cooldownMs).toISOString();
-            }
-            autoBlocked = true;
-            blockReason = `Auto-cooldown: Degraded data + Execution skips`;
-        } else if (this.snapshot.recentTriggers.executionDelayBursts >= this.snapshot.thresholds.maxSequentialDelays) {
-            reducedRiskMode = true;
-        } else if (this.snapshot.recentTriggers.degradedDataBursts >= this.snapshot.thresholds.maxDegradedDataEvents) {
-            reducedRiskMode = true;
-        }
-
-
-        const riskLimits = riskLimitsService.getSnapshot();
-        if (riskLimits.currentDailyPnL <= -riskLimits.global.maxDailyLoss) {
-            autoBlocked = true;
-            blockReason = 'Max daily loss exceeded';
-        } else if (riskLimits.currentDailyPnL <= -riskLimits.global.maxDailyLoss * 0.8) {
-            reducedRiskMode = true;
-        } else if (riskLimits.currentOpenPositions >= riskLimits.global.maxOpenPositions) {
-            reducedRiskMode = true;
-        }
-    
-        if (this.snapshot.cooldownActive) {
-            autoBlocked = true;
-            blockReason = blockReason || 'Cooling down from recent bursts';
-        }
-
-        if (this.snapshot.manualKillSwitch) {
-            autoBlocked = true;
-            blockReason = 'Manual Kill Switch Active';
-        }
-
-        this.snapshot.autoBlocked = autoBlocked;
-        this.snapshot.reducedRiskMode = reducedRiskMode && !autoBlocked;
-        
-        if (autoBlocked) {
-            mode = 'BLOCKED';
-        } else if (reducedRiskMode) {
-            mode = 'REDUCED';
-        }
-
-        if (this.snapshot.lastMode !== mode) {
-            logStructured('SYSTEM', 'WARN', 'control_mode_changed', `Control mode changed to ${mode}`, {
-                previousMode: this.snapshot.lastMode,
-                newMode: mode,
-                reason: blockReason || (reducedRiskMode ? 'Repeated minor degradation' : 'Normal conditions resumed')
-            });
-        }
-
-        this.snapshot.lastMode = mode;
-        if (blockReason) {
-            this.snapshot.lastBlockReason = blockReason;
-        }
-
-        return mode;
-    }
+  public reset(): void {
+    this.manualKillSwitch = false;
+    this.assetStates.clear();
+    this.assetBurstResetTimes.clear();
+    this.lastMode = 'NORMAL';
+  }
 }
 
 export const tradingControlService = new TradingControlService();

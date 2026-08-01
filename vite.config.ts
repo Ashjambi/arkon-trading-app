@@ -1,7 +1,10 @@
 import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+
+const projectRoot = fileURLToPath(new URL('.', import.meta.url));
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
@@ -35,7 +38,7 @@ export default defineConfig(({ mode }) => {
       plugins: [react(), tailwindcss()],
       resolve: {
         alias: {
-          '@': path.resolve(__dirname, '.'),
+          '@': path.resolve(projectRoot, '.'),
         }
       }
     };

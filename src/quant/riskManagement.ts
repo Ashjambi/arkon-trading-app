@@ -1,5 +1,19 @@
 import { mean, std } from 'mathjs';
 
+export const calculateRealizedVolatility = (prices: number[], lookback: number = 20): number => {
+    if (!Array.isArray(prices) || prices.length < 2) return 0;
+    const window = prices.slice(Math.max(0, prices.length - lookback));
+    if (window.length < 2) return 0;
+    const returns = window.slice(1).map((price, idx) => {
+        const prev = window[idx];
+        if (prev <= 0 || price <= 0) return 0;
+        return Math.log(price / prev);
+    }).filter((value) => Number.isFinite(value));
+    if (returns.length < 2) return 0;
+    const rv = Number(std(returns));
+    return Number.isFinite(rv) ? Math.max(0, rv) : 0;
+};
+
 export const riskManagement = {
     // Fractional Kelly Criterion (e.g., 0.1 for conservative sizing)
     calculatePositionSize: (capital: number, winProbability: number, winLossRatio: number, fraction: number = 0.1) => {
@@ -16,10 +30,12 @@ export const riskManagement = {
     },
     // Expected Shortfall (CVaR) - more robust than VaR
     calculateCVaR: (returns: number[], confidenceLevel: number = 0.95) => {
-        const sortedReturns = returns.sort((a, b) => a - b);
-        const index = Math.floor((1 - confidenceLevel) * sortedReturns.length);
+        if (!Array.isArray(returns) || returns.length === 0) return 0;
+        const sortedReturns = [...returns].sort((a, b) => a - b);
+        const index = Math.max(1, Math.floor((1 - confidenceLevel) * sortedReturns.length));
         const tailReturns = sortedReturns.slice(0, index);
-        return Number(mean(tailReturns));
+        const tailMean = mean(tailReturns) as number;
+        return Number.isFinite(tailMean) ? Number(tailMean) : 0;
     },
     // Correlation-based Risk Adjustment
     // Reduces position size if assets are highly correlated to avoid over-exposure

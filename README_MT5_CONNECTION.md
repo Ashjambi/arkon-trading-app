@@ -27,3 +27,42 @@ To allow MT5 to connect to the trading engine, you must run the server in an env
 1. Deploy the app permanently (e.g., using the **Deploy** button in AI Studio, or hosting it on a VPS/Heroku/Render).
 2. A deployed production app will have a clean URL without the cookie check.
 3. In MT5, set the `WebhookURL` to your production URL.
+
+## MT5 Sync Payload (Equity + Margin)
+
+To enable the advanced margin-call protection logic, include both `equity` and `margin` in the payload sent to `POST /api/mt5/sync`.
+
+Example payload:
+
+```json
+{
+   "positions": [],
+   "crl_baseline": 3000,
+   "crl_current": 3045,
+   "crl_diff": 45,
+   "crl_budget": 500,
+   "crl_threshold": 100,
+   "equity": 3200,
+   "margin": 740
+}
+```
+
+Notes:
+- `equity`: current account equity from MT5.
+- `margin`: currently used margin from MT5.
+- If `margin` is not provided, the app falls back to an internal estimate based on open positions.
+
+## Expert Advisor Snapshot
+
+The current generated EA follows the `Arkon51EA` template and sends a sync payload with:
+
+- `positions`
+- `crl_baseline`
+- `crl_current`
+- `crl_diff`
+- `crl_budget`
+- `crl_threshold`
+- `equity`
+- `margin`
+
+The live bridge still uses `http://127.0.0.1:3000` locally, and the diagnostics server exposes `/api/backtest/run` and `/api/rl/train` for strategy research.

@@ -23,6 +23,11 @@ export type ParentExecutionTcaSummary = {
     bestChildSlippageBps?: number | null;
     worstChildSlippageBps?: number | null;
     totalNotionalExecuted?: number | null;
+    totalDelayCost?: number | null;
+    totalExecutionCost?: number | null;
+    totalOpportunityCost?: number | null;
+    implementationShortfall?: number | null;
+    strategyRegimeAttribution?: string[];
 };
 
 export class ExecutionTcaAggregatorService {
@@ -48,6 +53,11 @@ export class ExecutionTcaAggregatorService {
 
         let totalNotionalExecutedOverall: number | null = null;
         let hasAnyNotional = false;
+        let totalDelayCost = 0;
+        let totalExecutionCost = 0;
+        let totalOpportunityCost = 0;
+        let implementationShortfall = 0;
+        const strategyRegimeAttribution: string[] = [];
 
         for (const child of children) {
             totalRequestedSize += child.requestedSize;
@@ -86,6 +96,12 @@ export class ExecutionTcaAggregatorService {
                 hasAnyNotional = true;
                 totalNotionalExecutedOverall = (totalNotionalExecutedOverall || 0) + child.notionalExecuted;
             }
+
+            totalDelayCost += child.slippage != null && child.slippage > 0 ? child.slippage * 0.5 : 0;
+            totalExecutionCost += child.slippage != null ? Math.abs(child.slippage) : 0;
+            totalOpportunityCost += child.fillRatio < 1 ? Math.abs((child.requestedSize - child.executedSize) * (child.requestedPrice ?? 0) * 0.01) : 0;
+            implementationShortfall += (child.slippage != null ? child.slippage : 0) + (child.fillRatio < 1 ? Math.abs((child.requestedSize - child.executedSize) * (child.requestedPrice ?? 0) * 0.01) : 0);
+            strategyRegimeAttribution.push(`slice:${child.sliceIndex}`);
         }
 
         const parentFillRatio = totalRequestedSize > 0 ? totalExecutedSize / totalRequestedSize : 0;
@@ -117,7 +133,12 @@ export class ExecutionTcaAggregatorService {
             weightedAverageSlippageBps,
             bestChildSlippageBps,
             worstChildSlippageBps,
-            totalNotionalExecuted: hasAnyNotional ? totalNotionalExecutedOverall : null
+            totalNotionalExecuted: hasAnyNotional ? totalNotionalExecutedOverall : null,
+            totalDelayCost,
+            totalExecutionCost,
+            totalOpportunityCost,
+            implementationShortfall,
+            strategyRegimeAttribution
         };
     }
 }

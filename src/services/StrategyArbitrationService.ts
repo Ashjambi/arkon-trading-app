@@ -1,6 +1,14 @@
-import { TradingSignal } from '../types';
+import { TradingSignal, SignalStrength } from '../types';
 import { strategyRegistryService } from './StrategyRegistryService';
 import { diagnosticsService } from './DiagnosticsService';
+import { adaptiveDecisionMemoryService } from './AdaptiveDecisionMemoryService';
+
+// SignalStrength is a string enum; map it to a numeric weight for scoring math.
+const SIGNAL_STRENGTH_WEIGHT: Record<SignalStrength, number> = {
+    [SignalStrength.STRONG]: 100,
+    [SignalStrength.MEDIUM]: 60,
+    [SignalStrength.STANDARD]: 30,
+};
 
 export type ArbitrationDecision = {
     signal: TradingSignal;
@@ -51,8 +59,17 @@ export class StrategyArbitrationService {
                     thematicGroup: 'Unknown'
                 };
                 
+                const memorySummary = adaptiveDecisionMemoryService.getMemorySummary({
+                    strategy: signal.strategy,
+                    regime: (signal as any).details?.quantRegime || 'UNKNOWN',
+                    executionStyle: (signal as any).executionStyle || 'MID',
+                    asset: signal.asset,
+                    direction: signal.direction
+                });
+                const memoryBonus = memorySummary.hasHistory ? (memorySummary.strategyRegimeEdgeScore * 20 + memorySummary.regimeAdjustedConfidence * 10) : 0;
+
                 // Final score calculation
-                const finalScore = (signal.qualityScore || 50) * meta.priorityWeight + (signal.strength || 0) * 0.1;
+                const finalScore = (signal.qualityScore || 50) * meta.priorityWeight + (SIGNAL_STRENGTH_WEIGHT[signal.strength] || 0) * 0.1 + memoryBonus;
                 
                 return {
                     signal,

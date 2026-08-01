@@ -132,6 +132,8 @@ describe('FullPipelineMultiWinnerE2E', () => {
                 'BTC-PERP': { openPositions: 0, currentExposure: 0 }
             }
         } as any);
+        
+        vi.mocked(executionStyleService.decideStyle).mockReturnValue('AGGRESSIVE');
     });
 
     it('Scenario: Full Pipeline with two winners from two strategies on BTC-PERP', async () => {

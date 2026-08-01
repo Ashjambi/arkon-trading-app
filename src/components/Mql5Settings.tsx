@@ -56,7 +56,7 @@ export const Mql5Settings: React.FC<Mql5SettingsProps> = ({ config, addLog }) =>
                     <p>اتبع الخطوات التالية لبدء التداول التلقائي:</p>
                     <ol className="list-decimal list-inside space-y-2 pl-2 text-zinc-400">
                         <li>افتح <strong className="text-zinc-200">MetaEditor</strong> في ميتاتريدر 5 (اضغط <strong className="text-zinc-200">F4</strong>).</li>
-                        <li>قم بإنشاء Expert Advisor جديد باسم <strong className="text-zinc-200">Arkon47EA</strong>.</li>
+                        <li>قم بإنشاء Expert Advisor جديد باسم <strong className="text-zinc-200">Arkon51EA</strong>.</li>
                         <li>احذف جميع الأسطر الافتراضية، ثم الصق الكود البرمجي المحدث بالكامل من الجهة اليمنى.</li>
                         <li>اضغط على زر <strong className="text-zinc-200">Compile</strong> في الأعلى؛ تأكد من عدم وجود أي أخطاء.</li>
                         <li>اسحب الاكسبرت للتشارت الخاص بـ <strong className="text-zinc-200">BTCUSD</strong> أو <strong className="text-zinc-200">ETHUSD</strong> بفريم <strong className="text-zinc-200">M15</strong> مع تفعيل <strong className="text-zinc-200">Algo Trading</strong>.</li>
@@ -68,7 +68,7 @@ export const Mql5Settings: React.FC<Mql5SettingsProps> = ({ config, addLog }) =>
         <div className="space-y-6">
             <div className="p-8 bg-amber-500/10 border border-amber-500/20 rounded-3xl flex items-center gap-6">
                 <i className="fas fa-exclamation-triangle text-amber-500 text-2xl"></i>
-                <p className="text-xs text-amber-200/80 leading-relaxed font-bold">تأكد من نسخ الكود المحدث ليتوافق مع بروتوكولات الإغلاق القسري وتصحيح واجهة الربط (v51.00). الصقه في MetaEditor وقم بعمل Compile.</p>
+                <p className="text-xs text-amber-200/80 leading-relaxed font-bold">تأكد من نسخ الكود المحدث ليتوافق مع بروتوكولات الربط والمزامنة والمخاطر (v51.00). الصقه في MetaEditor وقم بعمل Compile.</p>
             </div>
             <div className="relative group">
                 <pre className="bg-black/60 p-10 rounded-3xl border border-zinc-800 font-mono text-[11px] text-zinc-400 overflow-x-auto max-h-[450px] custom-scrollbar text-left group-hover:border-zinc-700 transition-all" dir="ltr">

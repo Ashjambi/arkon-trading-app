@@ -82,4 +82,70 @@ describe('TradingControlService', () => {
         snap1.recentTriggers.degradedDataBursts = 99;
         expect(tradingControlService.getSnapshot().recentTriggers.degradedDataBursts).toBe(0);
     });
+
+    it('7. per-asset isolation — BTC degraded data does NOT block ETH', () => {
+        // Trigger 3 degraded-data bursts on BTC only
+        tradingControlService.recordDegradedData('BTC');
+        tradingControlService.recordDegradedData('BTC');
+        tradingControlService.recordDegradedData('BTC');
+
+        // BTC should be BLOCKED
+        expect(tradingControlService.evaluateControlState('BTC')).toBe('BLOCKED');
+
+        // ETH should remain NORMAL
+        expect(tradingControlService.evaluateControlState('ETH')).toBe('NORMAL');
+    });
+
+    it('8. per-asset isolation — ETH cooldown does NOT affect BTC', () => {
+        // Start cooldown on ETH only
+        tradingControlService.startCooldown('ETH');
+
+        // ETH should be BLOCKED
+        expect(tradingControlService.evaluateControlState('ETH')).toBe('BLOCKED');
+
+        // BTC should remain NORMAL
+        expect(tradingControlService.evaluateControlState('BTC')).toBe('NORMAL');
+    });
+
+    it('9. per-asset isolation — independent burst counters between BTC and ETH', () => {
+        // BTC gets 2 degraded data bursts
+        tradingControlService.recordDegradedData('BTC');
+        tradingControlService.recordDegradedData('BTC');
+
+        // ETH gets 1 execution skip
+        tradingControlService.recordExecutionSkip('ETH');
+
+        // BTC: 2 bursts → REDUCED (BURST_THRESHOLD=3, totalBursts=2 < 3)
+        expect(tradingControlService.evaluateControlState('BTC')).toBe('NORMAL');
+
+        // ETH: 1 burst → NORMAL
+        expect(tradingControlService.evaluateControlState('ETH')).toBe('NORMAL');
+
+        // Add 1 more degraded data to BTC (3 total) → BLOCKED
+        tradingControlService.recordDegradedData('BTC');
+        expect(tradingControlService.evaluateControlState('BTC')).toBe('BLOCKED');
+
+        // ETH still only has 1 execution skip → NORMAL
+        expect(tradingControlService.evaluateControlState('ETH')).toBe('NORMAL');
+
+        // Add 2 more execution skips to ETH (3 total) → BLOCKED
+        tradingControlService.recordExecutionSkip('ETH');
+        tradingControlService.recordExecutionSkip('ETH');
+        expect(tradingControlService.evaluateControlState('ETH')).toBe('BLOCKED');
+
+        // BTC remains BLOCKED (unchanged by ETH's state)
+        expect(tradingControlService.evaluateControlState('BTC')).toBe('BLOCKED');
+    });
+
+    it('10. getSnapshot() returns per-asset state map', () => {
+        tradingControlService.recordDegradedData('BTC');
+        tradingControlService.recordDegradedData('ETH');
+
+        const snap = tradingControlService.getSnapshot();
+        expect(snap.assetStates).toBeDefined();
+        expect(snap.assetStates!['BTC']).toBeDefined();
+        expect(snap.assetStates!['ETH']).toBeDefined();
+        expect(snap.assetStates!['BTC'].recentTriggers.degradedDataBursts).toBe(1);
+        expect(snap.assetStates!['ETH'].recentTriggers.degradedDataBursts).toBe(1);
+    });
 });

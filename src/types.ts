@@ -32,7 +32,10 @@ export enum SignalStrength {
 export type StrategyType = 
     'BTC_TREND' | 'BTC_MEAN_REV' | 'BTC_TREND_FOLLOWING' | 'BTC_OFI' | 'BTC_AVR' | 'BTC_SCALPER' |
     'ETH_TREND' | 'ETH_MEAN_REV' | 'ETH_TREND_FOLLOWING' | 'ETH_CORR_ARB' | 'ETH_VOL_BREAK' | 'ETH_SCALPER' |
-    'PAIRS_TRADING' | 'VOLATILITY_BREAKOUT' | 'COINTEGRATION' |
+    'GOLD_TREND' | 'GOLD_MEAN_REV' | 'GOLD_SCALPER' |
+    'SOL_TREND' | 'SOL_MEAN_REV' | 'SOL_SCALPER' |
+  'PAIRS_TRADING' | 'VOLATILITY_BREAKOUT' | 'COINTEGRATION' |
+  'MEAN_REVERSION_ALPHA' | 'BREAKOUT_CAPTURE' | 'ARBITRAGE_SCANNER' | 'GRID_TRADING' |
     'NEWS_SHOCK' | 'WAIT';
 
 export type LogType = 'QUANT' | 'RISK' | 'EXEC' | 'SYSTEM' | 'INFO' | 'ERROR' | 'WHALE' | 'NEWS' | 'COOLDOWN' | 'SECURE' | 'BOOST' | 'PROFIT_LOCK' | 'HEDGE' | 'FLIP' | 'STRATEGY_SWITCH';
@@ -142,6 +145,9 @@ export interface TradingSignal {
   strategy: StrategyType;
   lotMultiplier?: number;
 
+  // Optional diagnostic/quality metadata attached at runtime (e.g. signalQualityBreakdown).
+  metadata?: Record<string, any>;
+
   recommendedSize?: number;
   executionHints?: {
       executionMode: 'NORMAL' | 'PASSIVE' | 'PRICE_IMPROVED' | 'DELAYED' | 'SKIP';
@@ -186,6 +192,112 @@ export interface StrategyPerformance {
     consecutiveLosses: number;
 }
 
+// ─── Diagnostics Event Taxonomy (v2) ───────────────────────────────
+
+export type EventCategory =
+  | 'SIGNAL_FILTERED'       // Expected market/strategy rejection: ADR, Hurst, score, regime, contradiction
+  | 'RISK_BLOCKED'          // Intentional pre-trade risk/compliance limit block
+  | 'EXECUTION_FAILED'      // Real submitted execution that failed
+  | 'BRIDGE_FAILURE'        // Unique auth, transport, timeout, 5xx, MT5 transport incident
+  | 'CIRCUIT_BREAKER_TRANSITION' // State transition: CLOSED→OPEN, OPEN→HALF_OPEN, HALF_OPEN→CLOSED
+  | 'CIRCUIT_BREAKER_SUPPRESSED'; // Repeated attempt suppressed while breaker OPEN
+
+export interface FilteredSignalEvent {
+  category: 'SIGNAL_FILTERED';
+  timestamp: number;
+  reasonCode: string;
+  reason: string;
+  asset: string;
+  strategy: string;
+  direction?: string;
+  filterType: 'ADR' | 'DVOL' | 'SLIPPAGE' | 'REGIME' | 'SCORE' | 'CONTRADICTION' | 'HURST' | 'RSQUARED' | 'COOLDOWN' | 'CORRELATION' | 'COMPLIANCE' | 'OTHER';
+  correlationId: string;
+}
+
+export interface RiskBlockEvent {
+  category: 'RISK_BLOCKED';
+  timestamp: number;
+  reasonCode: string;
+  reason: string;
+  asset: string;
+  blockType: 'EXPOSURE_LIMIT' | 'POSITION_LIMIT' | 'DAILY_LOSS' | 'NOTIONAL_LIMIT' | 'PRE_TRADE' | 'STRATEGY_BUDGET' | 'PORTFOLIO_DRAWDOWN' | 'TAIL_RISK' | 'CONTROL_LAYER';
+  correlationId: string;
+}
+
+export interface BridgeFailureEvent {
+  category: 'BRIDGE_FAILURE';
+  timestamp: number;
+  failureType: 'BRIDGE_AUTH' | 'BRIDGE_CONNECTIVITY' | 'BRIDGE_HTTP_5XX' | 'MT5_TRANSPORT' | 'TIMEOUT' | 'UNKNOWN';
+  message: string;
+  correlationId: string;
+  requestId?: string;
+  isUniqueIncident: boolean;
+}
+
+export interface BreakerTransitionEvent {
+  category: 'CIRCUIT_BREAKER_TRANSITION';
+  timestamp: number;
+  fromState: 'CLOSED' | 'OPEN' | 'HALF_OPEN';
+  toState: 'CLOSED' | 'OPEN' | 'HALF_OPEN';
+  reason: string;
+  asset: string;
+}
+
+export interface SuppressedDuplicateEvent {
+  category: 'CIRCUIT_BREAKER_SUPPRESSED';
+  timestamp: number;
+  originalTimestamp: number;
+  correlationId: string;
+  reason: string;
+}
+
+export interface DailyEventRecord {
+  /** Canonical key: asset|strategy|direction|reasonCode|category */
+  key: string;
+  firstSeen: number;
+  lastSeen: number;
+  occurrenceCount: number;
+  category: EventCategory;
+  reasonCode: string;
+  reason: string;
+  asset: string;
+  strategy: string;
+  direction?: string;
+}
+
+export interface DiagnosticsCountersV2 {
+  // Active state (snapshot, not cumulative)
+  activeRiskBlocks: number;
+  circuitBreakerState: 'CLOSED' | 'OPEN' | 'HALF_OPEN';
+  circuitBreakerAsset: string | null;
+
+  // Unique events today (deduplicated by asset+strategy+direction+reasonCode per local trading day)
+  uniqueSignalFiltersToday: number;
+  uniqueRiskBlocksToday: number;
+  uniqueBridgeIncidentsToday: number;
+
+  // Circuit breaker metrics
+  consecutiveBreakerFailures: number;
+  breakerFailureThreshold: number;
+  breakerRetryCount: number;
+  breakerSuppressedDuplicateCount: number;
+  breakerOpenTransitionCount: number;
+
+  // Recent events for tooltip
+  recentEvents: Array<{
+    category: EventCategory;
+    timestamp: number;
+    reasonCode: string;
+    reason: string;
+    asset: string;
+    strategy?: string;
+    direction?: string;
+    correlationId: string;
+    occurrenceCount: number;
+    isExpectedBlock: boolean;
+  }>;
+}
+
 export interface AppConfig {
   // Telegram
   telegramBotToken: string;
@@ -194,12 +306,43 @@ export interface AppConfig {
 
   // Bridge & Connectivity
   webhookUrl: string;
-  webhookSecret: string;
+  webhookSecret?: string;
   bridgeLatencyThreshold: number;
 
   // Execution Engine
   autoExecution: boolean;
+  adaptiveRiskEnabled?: boolean;
+  adaptiveRiskMaxExposurePct?: number;
+  adaptiveRiskAtrMultiplierTrending?: number;
+  adaptiveRiskAtrMultiplierRanging?: number;
+  adaptiveRiskAtrMultiplierVolatile?: number;
+  circuitBreakerFailureThreshold?: number;
+  circuitBreakerRecoveryTimeoutMs?: number;
+  circuitBreakerHalfOpenMaxCalls?: number;
+  executionMaxRetries?: number;
+  executionRetryBaseDelayMs?: number;
+  executionRetryJitterMs?: number;
+  enableRlExecution?: boolean;
+  rlExecutionBoostMultiplier?: number;
+  rlExecutionHedgeMultiplier?: number;
+  rlExecutionHoldThreshold?: number;
   hunterMode: boolean; // Aggressive scalping mode with lower quality threshold
+  hunterModeEnabled?: boolean;
+  hunterMinSignalScore?: number;
+  hunterAllowedRegimes?: string[];
+  hunterMaxSpreadBps?: number;
+  hunterMinLiquidityScore?: number;
+  hunterMaxVolatilityScore?: number;
+  hunterSizeMultiplier?: number;
+  hunterTargetMultiplier?: number;
+  hunterAllowAddOnEntry?: boolean;
+  hunterAllowReentry?: boolean;
+  hunterMaxConcurrentHunterTrades?: number;
+  hunterCooldownSeconds?: number;
+  hunterMinExecutionConfidence?: number;
+  hunterDisableDuringDrawdown?: boolean;
+  hunterDrawdownThreshold?: number;
+  hunterLogDecisions?: boolean;
   minSignalScore: number;
   cooldownHours: number;
   cooldownSameAssetMins: number;
@@ -212,9 +355,22 @@ export interface AppConfig {
   maxAllocationPerTradePercent: number; 
   fixedLotSizeBTC: number; 
   fixedLotSizeETH: number;
+  fixedLotSizeGOLD: number;
+  fixedLotSizeSOL: number;
   equityProtectionPercent: number; 
   dailyLossLimitUSD: number;
   maxDrawdownDailyPercent: number;
+
+  // --- GOLD (XAUUSD) SPECIFIC CONFIG ---
+  enableGoldTrading: boolean;
+  goldMaxRiskPerTrade: number;
+  goldMaxConcurrentPositions: number;
+  goldSpreadFilter: number;
+  goldSessionFilter: boolean;
+  goldSessionStart: number;   // UTC hour
+  goldSessionEnd: number;     // UTC hour
+  goldPriceMaxAgeMs: number;
+  goldMaxLot: number;
 
   // Profit Protection & Trailing
   forceClosePnL: number;

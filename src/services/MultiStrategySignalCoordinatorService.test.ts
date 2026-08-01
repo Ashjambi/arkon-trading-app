@@ -28,12 +28,12 @@ describe('MultiStrategySignalCoordinatorService', () => {
         };
     });
 
-    const baseSignal = (id: string, strategy: string, asset: string, direction: 'LONG' as any | 'SHORT', qualityScore: number): TradingSignal => ({
+    const baseSignal = (id: string, strategy: string, asset: string, direction: 'LONG' | 'SHORT', qualityScore: number): TradingSignal => ({
         id,
         timestamp: Date.now(),
         asset,
-        direction,
-        strength: 50,
+        direction: direction as any,
+        strength: 50 as any,
         entry: 100,
         stopLoss: 90,
         takeProfit: 120,
@@ -41,7 +41,8 @@ describe('MultiStrategySignalCoordinatorService', () => {
         tp2: 120,
         qualityScore,
         reasoning: '',
-        strategy: strategy as any
+        strategy: strategy as any,
+        details: {} as any
     });
 
     it('1. Coordinates end-to-end preserving valid signals', () => {

@@ -1,0 +1,28 @@
+﻿import { logStructured } from '../utils/logger';
+import { riskLimitsService } from './RiskLimitsService';
+
+export interface PerAssetControlState {
+  autoBlocked: boolean;
+  reducedRiskMode: boolean;
+  cooldownActive: boolean;
+  cooldownUntil: string | null;
+  lastBlockReason: string | null;
+  recentTriggers: {
+    degradedDataBursts: number;
+    executionSkipBursts: number;
+    executionDelayBursts: number;
+    toxicityBursts: number;
+  };
+}
+
+export interface TradingControlSnapshot {
+  manualKillSwitch: boolean;
+  autoBlocked: boolean;
+  reducedRiskMode: boolean;
+  cooldownActive: boolean;
+  cooldownUntil: string | null;
+  lastBlockReason: string | null;
+  lastMode: 'NORMAL' | 'REDUCED' | 'BLOCKED';
+  recentTriggers: {
+    degradedDataBursts: number;
+

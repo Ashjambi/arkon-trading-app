@@ -1,57 +1,38 @@
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-  useMemo,
-} from "react";
-import { logStructured } from "./utils/logger";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
-  fetchMarketSummary,
-  fetchCandles,
-  fetchDVOL,
-  fetchOptionsVolume,
-  fetchOrderBook,
-  fetchDailyCandles,
-} from "./services/deribitService";
-import { deribitSocket } from "./services/deribitSocketService";
-import { btcTradeBuffer, ethTradeBuffer } from "./services/TradeBuffer";
-import {
-  fetchBinanceSummary,
-  fetchBinanceCandles,
-  fetchBinanceOrderBook,
-} from "./services/binanceService";
-import { binanceSocket } from "./services/binanceSocketService";
-import { generateSignal } from "./services/tradingAlgo";
-import { ExecutionOrchestrator } from "./services/ExecutionOrchestrator";
-import {
-  sendToWebhook,
-  checkBridgeStatus,
-  fetchBridgeState,
   clearRemoteBridge,
   getEffectiveUrl,
 } from "./services/webhookService";
-import {
-  sendTestMessage,
-  sendSignalToTelegram,
-  sendSystemAlertToTelegram,
-  sendTradeExecutionAlertToTelegram,
-  sendNoSignalsAlertToTelegram,
-} from "./services/telegramService";
+import { sendTestMessage } from "./services/telegramService";
 import {
   TradingSignal,
   AppConfig,
-  LogEntry,
-  LogType,
   MarketAnalysisState,
-  EconomicEvent,
   SignalDirection,
   SignalStrength,
   StrategyType,
-  StrategyPerformance,
-  StrategyGates,
 } from "./types";
 import { getMQL5Code } from "./utils/mqlCode";
+import {
+  CURRENT_VERSION,
+  GOLD_MAX_PRICE_AGE_MS,
+  MARKET_POLL_INTERVAL_MS,
+  PROCESS_ASSET_STAGGER_MS,
+} from "./utils/constants";
+import { checkBridgeStatus } from "./services/webhookService";
+import { strategyRegistryService } from "./services/StrategyRegistryService";
+import { MultiAssetManager } from "./services/MultiAssetManager";
+
+// ─────────────────── Hooks ───────────────────
+import { useSettings } from "./hooks/useSettings";
+import { useLogger } from "./hooks/useLogger";
+import { useBridgeSync } from "./hooks/useBridgeSync";
+import { useMarketData } from "./hooks/useMarketData";
+import { useSignalEngine } from "./hooks/useSignalEngine";
+import { usePerformanceMetrics } from "./hooks/usePerformanceMetrics";
+import { useRebalance } from "./hooks/useRebalance";
+
+// ─────────────────── Components ───────────────────
 import MarketStats from "./components/MarketStats";
 import SignalCard from "./components/SignalCard";
 import { TradePipeline } from "./components/TradePipeline";
@@ -60,1098 +41,101 @@ import { EngineSettings } from "./components/EngineSettings";
 import { RiskManagementSettings } from "./components/RiskManagementSettings";
 import { TrailingChaseSettings } from "./components/TrailingChaseSettings";
 import { HedgeSettings } from "./components/HedgeSettings";
-// NewsSettings removed
 import { Mql5Settings } from "./components/Mql5Settings";
 import { DiagnosticsSettings } from "./components/DiagnosticsSettings";
 
-import { calculatePerformance } from "./services/performanceService";
-import { checkPortfolioRisk } from "./services/portfolioRisk";
-import { executionDecisionTraceService } from "./services/ExecutionDecisionTraceService";
-import { executionSanityDiagnosticService } from "./services/ExecutionSanityDiagnosticService";
-
-const CURRENT_VERSION = "50.00-LOCAL";
-
-const createDefaultPerf = (
-  type: "SCALPING" | "SWING",
-  isEnabled: boolean = true,
-): StrategyPerformance => ({
-  wins: 0,
-  losses: 0,
-  totalProfitPoints: 0,
-  totalLossPoints: 0,
-  successScore: 0,
-  isEnabled,
-  type,
-  totalTrades: 0,
-  winRate: 0,
-  profitFactor: 0,
-  sharpeRatio: 0,
-  maxDrawdown: 0,
-  lastTradeTime: 0,
-  consecutiveLosses: 0,
-});
-
-const DEFAULT_STRATEGY_PERFORMANCE: Record<StrategyType, StrategyPerformance> =
-  {
-    BTC_TREND: createDefaultPerf("SWING"),
-    BTC_MEAN_REV: createDefaultPerf("SCALPING"),
-    BTC_TREND_FOLLOWING: createDefaultPerf("SWING"),
-    BTC_OFI: createDefaultPerf("SCALPING"),
-    BTC_AVR: createDefaultPerf("SCALPING"),
-    BTC_SCALPER: createDefaultPerf("SCALPING"),
-    ETH_TREND: createDefaultPerf("SWING"),
-    ETH_MEAN_REV: createDefaultPerf("SCALPING"),
-    ETH_TREND_FOLLOWING: createDefaultPerf("SWING"),
-    ETH_CORR_ARB: createDefaultPerf("SWING"),
-    ETH_VOL_BREAK: createDefaultPerf("SWING"),
-    ETH_SCALPER: createDefaultPerf("SCALPING"),
-    PAIRS_TRADING: createDefaultPerf("SWING"),
-    VOLATILITY_BREAKOUT: createDefaultPerf("SWING"),
-    COINTEGRATION: createDefaultPerf("SWING"),
-    NEWS_SHOCK: createDefaultPerf("SCALPING"),
-    WAIT: createDefaultPerf("SWING"),
-  };
-
-const DEFAULT_STRATEGY_GATES: Record<StrategyType, StrategyGates> = {
-  BTC_TREND: {
-    hurst: 0.55,
-    fisher: 1.2,
-    rSquared: 0.3,
-    dvol: 40,
-    toxicity: 0.7,
-    slippage: 0.001,
-    vwapZScore: 1.5,
-    ofi: 0.2,
-    volRatio: 1.2,
-  },
-  BTC_MEAN_REV: {
-    hurst: 0.4,
-    fisher: 1.5,
-    rSquared: 0.2,
-    dvol: 30,
-    toxicity: 0.5,
-    slippage: 0.001,
-    vwapZScore: 2.0,
-    ofi: 0.1,
-    volRatio: 1.1,
-  },
-  BTC_TREND_FOLLOWING: {
-    hurst: 0.6,
-    fisher: 0.8,
-    rSquared: 0.4,
-    dvol: 45,
-    toxicity: 0.8,
-    slippage: 0.001,
-    vwapZScore: 1.2,
-    ofi: 0.3,
-    volRatio: 1.5,
-  },
-  BTC_OFI: {
-    hurst: 0.5,
-    fisher: 1.0,
-    rSquared: 0.3,
-    dvol: 40,
-    toxicity: 0.6,
-    slippage: 0.001,
-    vwapZScore: 1.5,
-    ofi: 0.4,
-    volRatio: 1.2,
-  },
-  BTC_AVR: {
-    hurst: 0.5,
-    fisher: 1.0,
-    rSquared: 0.3,
-    dvol: 40,
-    toxicity: 0.6,
-    slippage: 0.001,
-    vwapZScore: 1.5,
-    ofi: 0.2,
-    volRatio: 1.2,
-  },
-  BTC_SCALPER: {
-    hurst: 0.4,
-    fisher: 1.2,
-    rSquared: 0.2,
-    dvol: 30,
-    toxicity: 0.5,
-    slippage: 0.001,
-    vwapZScore: 2.0,
-    ofi: 0.1,
-    volRatio: 1.1,
-  },
-  ETH_TREND: {
-    hurst: 0.55,
-    fisher: 1.5,
-    rSquared: 0.4,
-    dvol: 50,
-    toxicity: 0.7,
-    slippage: 0.001,
-    vwapZScore: 2.0,
-    ofi: 0.2,
-    volRatio: 1.5,
-  },
-  ETH_MEAN_REV: {
-    hurst: 0.4,
-    fisher: 2.0,
-    rSquared: 0.3,
-    dvol: 40,
-    toxicity: 0.5,
-    slippage: 0.001,
-    vwapZScore: 2.5,
-    ofi: 0.1,
-    volRatio: 1.2,
-  },
-  ETH_TREND_FOLLOWING: {
-    hurst: 0.6,
-    fisher: 1.0,
-    rSquared: 0.5,
-    dvol: 60,
-    toxicity: 0.8,
-    slippage: 0.001,
-    vwapZScore: 1.5,
-    ofi: 0.3,
-    volRatio: 1.8,
-  },
-  ETH_CORR_ARB: {
-    hurst: 0.5,
-    fisher: 1.0,
-    rSquared: 0.4,
-    dvol: 50,
-    toxicity: 0.6,
-    slippage: 0.001,
-    vwapZScore: 2.0,
-    ofi: 0.2,
-    volRatio: 1.5,
-  },
-  ETH_VOL_BREAK: {
-    hurst: 0.6,
-    fisher: 1.0,
-    rSquared: 0.4,
-    dvol: 70,
-    toxicity: 0.9,
-    slippage: 0.001,
-    vwapZScore: 1.5,
-    ofi: 0.4,
-    volRatio: 2.0,
-  },
-  ETH_SCALPER: {
-    hurst: 0.4,
-    fisher: 1.5,
-    rSquared: 0.3,
-    dvol: 40,
-    toxicity: 0.5,
-    slippage: 0.001,
-    vwapZScore: 2.5,
-    ofi: 0.1,
-    volRatio: 1.2,
-  },
-  PAIRS_TRADING: {
-    hurst: 0.5,
-    fisher: 1.5,
-    rSquared: 0.5,
-    dvol: 50,
-    toxicity: 0.6,
-    slippage: 0.001,
-    vwapZScore: 2.0,
-    ofi: 0.2,
-    volRatio: 1.5,
-  },
-  VOLATILITY_BREAKOUT: {
-    hurst: 0.6,
-    fisher: 1.0,
-    rSquared: 0.4,
-    dvol: 70,
-    toxicity: 0.9,
-    slippage: 0.001,
-    vwapZScore: 1.5,
-    ofi: 0.4,
-    volRatio: 2.0,
-  },
-  COINTEGRATION: {
-    hurst: 0.5,
-    fisher: 1.5,
-    rSquared: 0.5,
-    dvol: 50,
-    toxicity: 0.6,
-    slippage: 0.001,
-    vwapZScore: 2.0,
-    ofi: 0.2,
-    volRatio: 1.5,
-  },
-  NEWS_SHOCK: {
-    hurst: 0.7,
-    fisher: 0.5,
-    rSquared: 0.2,
-    dvol: 80,
-    toxicity: 1.0,
-    slippage: 0.005,
-    vwapZScore: 1.0,
-    ofi: 0.5,
-    volRatio: 2.5,
-  },
-  WAIT: {
-    hurst: 0.5,
-    fisher: 1.0,
-    rSquared: 0.5,
-    dvol: 50,
-    toxicity: 0.5,
-    slippage: 0.001,
-    vwapZScore: 2.0,
-    ofi: 0.2,
-    volRatio: 1.5,
-  },
-};
-
-const DEFAULT_CONFIG: AppConfig = {
-  telegramBotToken: "",
-  telegramChatId: "",
-  enableTelegramAlerts: true,
-  webhookUrl: "http://127.0.0.1:3000",
-  webhookSecret: "ARKON_SECURE_2025",
-  bridgeLatencyThreshold: 500,
-  autoExecution: true,
-  hunterMode: true,
-  minSignalScore: 10, // Significantly lowered to increase trading opportunities
-  cooldownHours: 0.1, // Significantly lowered
-  cooldownSameAssetMins: 1, // Significantly lowered
-  riskRewardRatio: 2.0, // Increased flexibility
-  maxOpenTrades: 100, // Max total allowed active positions
-  maxTradesPerWave: 50, // Max active trades per direction (Safe Grid)
-  dynamicVolSpacing: 0.01, // Greatly reduced spacing to catch opportunities faster and build grids
-  maxAllocationPerTradePercent: 2.0,
-  fixedLotSizeBTC: 0.1, // Enhanced further
-  fixedLotSizeETH: 0.2, // Enhanced further
-  equityProtectionPercent: 10.0,
-  dailyLossLimitUSD: 250,
-  maxDrawdownDailyPercent: 3.5,
-  forceClosePnL: 0.5,
-  autoHedgeEnabled: true,
-  hedgeRatio: 0.5,
-  flipEnabled: false,
-  flipSensitivityScore: 90,
-  disableInitialSL: true,
-  useVirtualSL: false,
-  commissionRate: 0.0005,
-  orderFlowConfig: {
-    enabled: false,
-    ofiThreshold: 0.3,
-    imbalanceRatio: 3.0,
-    minVolume: 100,
-    vwapEnabled: true,
-  },
-  hurst: 0.55,
-  fisher: 1.5,
-  rSquared: 0.4,
-  dvol: 50,
-  toxicity: 0.7,
-  slippage: 0.001,
-  vwapZScore: 2.0,
-  ofi: 0.2,
-  volRatio: 1.5,
-  enableTrendFollowing: true,
-  trendFollowingThreshold: 0.8,
-  avrVolatilityThreshold: 2.5,
-  avrLookbackPeriod: 20,
-  ofiImbalanceThreshold: 0.8,
-  ofiSensitivity: 5,
-  corrThreshold: 0.9,
-  corrLookback: 50,
-  strategyPerformance: DEFAULT_STRATEGY_PERFORMANCE,
-  strategyGates: DEFAULT_STRATEGY_GATES,
-  autoDisableThreshold: 0,
-  dcaZones: [],
-};
-
 const App: React.FC = () => {
-  const [config, setConfig] = useState<AppConfig>(() => {
-    try {
-      const saved = localStorage.getItem(`arkon_config_v${CURRENT_VERSION}`);
-      let finalConfig;
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        // Deep merge strategyPerformance to ensure new fields exist
-        const mergedPerf = { ...DEFAULT_CONFIG.strategyPerformance };
-        if (parsed.strategyPerformance) {
-          Object.keys(parsed.strategyPerformance).forEach((key) => {
-            const stratKey = key as StrategyType;
-            if (mergedPerf[stratKey]) {
-              mergedPerf[stratKey] = {
-                ...mergedPerf[stratKey],
-                ...parsed.strategyPerformance[stratKey],
-              };
-            }
-          });
-        }
-        finalConfig = {
-          ...DEFAULT_CONFIG,
-          ...parsed,
-          strategyPerformance: mergedPerf,
-        };
+  // ═══════════════════════════════════════
+  //  HOOKS: config, logger, bridge, market, signals, perf, rebalance
+  // ═══════════════════════════════════════
 
-        // FORCE SAFE DEFAULTS (Overriding dangerous aggressive settings, relaxed for flexibility)
-        if (finalConfig.maxOpenTrades > 200) finalConfig.maxOpenTrades = 200;
-        if (finalConfig.maxTradesPerWave > 100) finalConfig.maxTradesPerWave = 100;
-        if (finalConfig.dynamicVolSpacing < 0.01) finalConfig.dynamicVolSpacing = 0.01;
-        if (finalConfig.fixedLotSizeETH > 10.0) finalConfig.fixedLotSizeETH = 10.0;
-        if (finalConfig.fixedLotSizeBTC > 5.0) finalConfig.fixedLotSizeBTC = 5.0;
-
-      } else {
-        finalConfig = DEFAULT_CONFIG;
-      }
-
-      return finalConfig;
-    } catch (e) {
-      return DEFAULT_CONFIG;
-    }
-  });
-
-  const [tradeHistory, setTradeHistory] = useState<any[]>([]);
-  const processedTradeIdsRef = useRef<Set<string>>(new Set());
-  const updateTradeHistory = useCallback((newTrade: any) => {
-    const tradeId = String(newTrade.id || newTrade.ticket || "");
-    if (!tradeId || processedTradeIdsRef.current.has(tradeId)) return;
-    processedTradeIdsRef.current.add(tradeId);
-    setTradeHistory((prev) => [...prev, newTrade]);
-  }, []);
-  const [logs, setLogs] = useState<LogEntry[]>([
-    {
-      id: "start",
-      timestamp: Date.now(),
-      type: "SYSTEM",
-      message: `ARKON v${CURRENT_VERSION} [TURBO MODE] ACTIVE.`,
-    },
-  ]);
-  const [btcAnalysis, setBtcAnalysis] = useState<MarketAnalysisState | null>(
-    null,
+  const { config, setConfig, updateConfig, resetConfig, DEFAULT_CONFIG } =
+    useSettings();
+  const { logs: _logs, addLog } = useLogger();
+  const {
+    bridgeStatus,
+    managedTrades,
+    managedTradesRef,
+    crlState,
+    crlStateRef,
+    tradeHistory,
+    updateTradeHistory,
+  } = useBridgeSync(config.webhookUrl, addLog);
+  const {
+    btcAnalysis,
+    setBtcAnalysis,
+    ethAnalysis,
+    setEthAnalysis,
+    goldAnalysis,
+    setGoldAnalysis,
+    btcDataRef,
+    ethDataRef,
+    goldDataRef,
+    marketWsConnected,
+    marketWsUrl,
+    wsReconnectAttempts,
+    marketWsRef,
+    wsMarketConnectedRef,
+    isProcessingRef,
+    manualReconnect,
+    updateMarketDataRef,
+  } = useMarketData(config.webhookUrl, addLog);
+  const {
+    signals,
+    sendingRef,
+    sentSignalsRef,
+    lastSignalTimeRef,
+    lastExecutedTimeRef,
+    noSignalsAlertSentRef,
+    connectionDisabledRef,
+    processAsset,
+    handleSendSignal,
+  } = useSignalEngine(
+    config,
+    bridgeStatus,
+    addLog,
+    crlStateRef,
+    managedTradesRef,
+    updateTradeHistory,
+    setBtcAnalysis,
+    setEthAnalysis,
+    setGoldAnalysis,
+    btcDataRef,
+    ethDataRef,
+    goldDataRef,
   );
-  const [ethAnalysis, setEthAnalysis] = useState<MarketAnalysisState | null>(null);
+  const performanceMetrics = usePerformanceMetrics(tradeHistory);
+  const {
+    rebalanceOrders,
+    isRebalancing,
+    handlePreviewRebalance,
+    setRebalanceOrders,
+  } = useRebalance(addLog, btcDataRef, ethDataRef, managedTradesRef, crlStateRef);
 
-  const btcDataRef = useRef<{ summary?: any; ticker?: any; book?: any }>({});
-  const ethDataRef = useRef<{ summary?: any; ticker?: any; book?: any }>({});
+  // ═══════════════════════════════════════
+  //  UI STATE (stays local — not domain logic)
+  // ═══════════════════════════════════════
+
   const [activeTab, setActiveTab] = useState<"DASHBOARD" | "HISTORY">(
     "DASHBOARD",
   );
-  const performanceMetrics = useMemo(
-    () => calculatePerformance(tradeHistory),
-    [tradeHistory],
-  );
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  // ... existing code ...
   const [settingsTab, setSettingsTab] = useState<
-    "ENGINE" | "RISK_COMPLIANCE" | "STRATEGY" | "CHASE" | "SYSTEM" | "MQL5" | "DIAGNOSTICS"
+    | "ENGINE"
+    | "RISK_COMPLIANCE"
+    | "STRATEGY"
+    | "CHASE"
+    | "SYSTEM"
+    | "MQL5"
+    | "DIAGNOSTICS"
   >("ENGINE");
-  const [bridgeStatus, setBridgeStatus] = useState<boolean | null>(null);
-  const prevBridgeStatusRef = useRef<boolean | null>(null);
-  const [signals, setSignals] = useState<TradingSignal[]>([]);
-  const [managedTrades, setManagedTrades] = useState<any[]>([]);
-  const [crlState, setCrlState] = useState<any>(null);
-  const crlStateRef = useRef<any>(null);
-  useEffect(() => {
-     crlStateRef.current = crlState;
-  }, [crlState]);
-  const managedTradesRef = useRef<any[]>([]);
-  const sendingRef = useRef<Record<string, boolean>>({});
-  const sentSignalsRef = useRef<Set<string>>(new Set());
-  const signalStrategyMapRef = useRef<Record<string, string>>({});
-  const isProcessingRef = useRef(false);
-  const lastSignalTimeRef = useRef<number>(Date.now());
-  const lastExecutedTimeRef = useRef<Record<string, number>>({});
-  const noSignalsAlertSentRef = useRef(false);
-  const connectionDisabledRef = useRef(false);
 
-  const addLog = useCallback(
-    (message: string, type: LogType = "INFO", details?: string | object) => {
-      let category: 'QUANT' | 'RISK' | 'EXEC' | 'COMPLIANCE' | 'SYSTEM' = 'SYSTEM';
-      let level: 'INFO' | 'WARN' | 'ERROR' = 'INFO';
-
-      if (type === 'RISK' || type === 'COOLDOWN' || type === 'HEDGE') {
-        category = 'RISK';
-        level = 'WARN';
-      } else if (type === 'EXEC') {
-        category = 'EXEC';
-        level = 'INFO';
-      } else if (type === 'ERROR') {
-        category = 'SYSTEM';
-        level = 'ERROR';
-      } else if (type === 'QUANT') {
-        category = 'QUANT';
-        level = 'INFO';
-      } else if (type === 'SYSTEM' || type === 'STRATEGY_SWITCH') {
-        category = 'SYSTEM';
-        level = 'WARN';
-      }
-
-      logStructured(category, level, `ui_${type.toLowerCase()}`, message, {
-        details
-      });
-
-      setLogs((prev) =>
-        [
-          {
-            id: Math.random().toString(36).substr(2, 9),
-            timestamp: Date.now(),
-            type,
-            message,
-            details,
-          },
-          ...prev,
-        ].slice(0, 200),
-      );
-    },
-    [],
-  );
-
-  useEffect(() => {
-    // Sync critical config like forceClosePnL to the backend bridge dynamically
-    try {
-      if (config.webhookUrl) {
-        const effectiveUrl = getEffectiveUrl(config.webhookUrl);
-        const finalUrl = effectiveUrl.replace(/\/$/, "") + "/api/bridge/settings";
-        fetch(finalUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            forceClosePnL: config.forceClosePnL,
-            enableTelegramAlerts: config.enableTelegramAlerts,
-            telegramBotToken: config.telegramBotToken,
-            telegramChatId: config.telegramChatId
-          }),
-        }).catch(() => {});
-      }
-    } catch (e) {}
-  }, [
-    config.forceClosePnL, 
-    config.enableTelegramAlerts, 
-    config.telegramBotToken, 
-    config.telegramChatId, 
-    config.webhookUrl
-  ]);
-
-  const executionOrchestrator = useMemo(
-    () => new ExecutionOrchestrator(config, bridgeStatus, addLog),
-    [config, bridgeStatus, addLog],
-  );
-
-  const handleSendSignal = useCallback(
-    async (
-      signalsOrSignal: any | any[],
-      analysis: MarketAnalysisState,
-      actionType: string = "ENTRY",
-    ): Promise<boolean> => {
-      const signalsToProcess = Array.isArray(signalsOrSignal) ? signalsOrSignal : [signalsOrSignal];
-      const originalSignal = signalsToProcess[0];
-      // Check for duplicate requests
-      const reqId =
-        (originalSignal.id ||
-          originalSignal.signalId ||
-          originalSignal.ticket ||
-          Math.random()) + actionType;
-      if (sendingRef.current[reqId]) {
-        addLog(`⚠️ Signal Block: Duplicate request ${reqId}`, "SYSTEM");
-        return false;
-      }
-
-      sendingRef.current[reqId] = true;
-
-      try {
-        // Update orchestrator state before execution
-        executionOrchestrator.updateState(config, bridgeStatus);
-
-        const success = await executionOrchestrator.executePlan(
-          signalsToProcess,
-          analysis,
-          actionType,
-          crlState
-        );
-
-        if (
-          success &&
-          (actionType === "ENTRY" ||
-            actionType === "SECURE" ||
-            actionType === "HEDGE" ||
-            actionType === "FLIP")
-        ) {
-          sentSignalsRef.current.add(originalSignal.id);
-          if (sentSignalsRef.current.size > 1000) {
-            const arr = Array.from(sentSignalsRef.current);
-            sentSignalsRef.current = new Set(arr.slice(arr.length - 500));
-          }
-        }
-        return success;
-      } finally {
-        delete sendingRef.current[reqId];
-      }
-    },
-    [config, bridgeStatus, addLog, executionOrchestrator],
-  );
-
-  useEffect(() => {
-    const handleBtcSummary = (data: any) => {
-      const perp = data.find((s: any) =>
-        s?.instrument_name?.includes("BTC-PERPETUAL"),
-      );
-      if (perp) btcDataRef.current.summary = perp;
-    };
-    const handleEthSummary = (data: any) => {
-      const perp = data.find((s: any) =>
-        s?.instrument_name?.includes("ETH-PERPETUAL"),
-      );
-      if (perp) ethDataRef.current.summary = perp;
-    };
-    const handleBtcTicker = (data: any) => {
-      btcDataRef.current.ticker = data;
-    };
-    const handleEthTicker = (data: any) => {
-      ethDataRef.current.ticker = data;
-    };
-    const handleBtcBook = (data: any) => {
-      btcDataRef.current.book = data;
-    };
-    const handleEthBook = (data: any) => {
-      ethDataRef.current.book = data;
-    };
-    
-    const handleBtcTrades = (trades: any[]) => {
-      btcTradeBuffer.addTrades(trades);
-    };
-    
-    const handleEthTrades = (trades: any[]) => {
-      ethTradeBuffer.addTrades(trades);
-    };
-
-    deribitSocket.subscribeBookSummary("BTC", "future", handleBtcSummary);
-    deribitSocket.subscribeBookSummary("ETH", "future", handleEthSummary);
-        deribitSocket.subscribeTicker("BTC-PERPETUAL", handleBtcTicker);
-    deribitSocket.subscribeTicker("ETH-PERPETUAL", handleEthTicker);
-        deribitSocket.subscribeOrderBook("BTC-PERPETUAL", handleBtcBook);
-    deribitSocket.subscribeOrderBook("ETH-PERPETUAL", handleEthBook);
-    
-    deribitSocket.subscribeTrades("BTC-PERPETUAL", handleBtcTrades);
-    deribitSocket.subscribeTrades("ETH-PERPETUAL", handleEthTrades);
-    
-    return () => {
-      deribitSocket.unsubscribe(`book.summary.BTC.future`, handleBtcSummary);
-      deribitSocket.unsubscribe(`book.summary.ETH.future`, handleEthSummary);
-            deribitSocket.unsubscribe(`ticker.BTC-PERPETUAL.raw`, handleBtcTicker);
-      deribitSocket.unsubscribe(`ticker.ETH-PERPETUAL.raw`, handleEthTicker);
-            deribitSocket.unsubscribe(
-        `book.BTC-PERPETUAL.none.10.100ms`,
-        handleBtcBook,
-      );
-      deribitSocket.unsubscribe(
-        `book.ETH-PERPETUAL.none.10.100ms`,
-        handleEthBook,
-      );
-      deribitSocket.unsubscribe(`trades.BTC-PERPETUAL.100ms`, handleBtcTrades);
-      deribitSocket.unsubscribe(`trades.ETH-PERPETUAL.100ms`, handleEthTrades);
-    };
-  }, []);
-
-  const updateMarketData = useCallback(async () => {
-    if (isProcessingRef.current) return;
-    isProcessingRef.current = true;
-    try {
-      // Run bridge checks in parallel without blocking market data
-      Promise.allSettled([
-        checkBridgeStatus(config.webhookUrl).then((isOnline) => {
-          setBridgeStatus(isOnline);
-          if (prevBridgeStatusRef.current === true && isOnline === false) {
-            addLog("⚠️ انقطع الاتصال بالجسر (Bridge Connection Lost)", "RISK");
-          }
-          prevBridgeStatusRef.current = isOnline;
-        }),
-        // Fetch MT5 Errors
-        (async () => {
-          try {
-            const effectiveUrl = getEffectiveUrl(config.webhookUrl);
-            const res = await fetch(`${effectiveUrl.replace(/\/$/, "")}/api/mt5/errors`);
-            const errors = await res.json();
-            if (errors && errors.length > 0) {
-                 errors.forEach((err: any) => {
-                     if (err.error === 'BROKER_SYMBOL_NOT_RESOLVED') {
-                         executionSanityDiagnosticService.recordRejection(err.id, 'execution_orchestrator', 'BROKER_SYMBOL_NOT_RESOLVED', err.message);
-                         addLog(`❌ MT5 Bridge Error: ${err.message}`, 'ERROR');
-                     }
-                 });
-             }
-          } catch(e) {}
-        })(),
-
-        fetchBridgeState(config.webhookUrl).then((bridgeState: any) => {
-          if (bridgeState && bridgeState.closedTrades) {
-            bridgeState.closedTrades.forEach((trade: any) => {
-              updateTradeHistory(trade);
-            });
-          }
-        }),
-      ]);
-
-      const processAsset = async (asset: "BTC" | "ETH") => {
-        try {
-          const liveData =
-            asset === "BTC" ? btcDataRef.current : ethDataRef.current;
-
-          // Fallback to REST if socket hasn't provided summary yet or if price is invalid
-          let perp = liveData.summary || liveData.ticker;
-          let currentPrice = perp ? perp.last || perp.last_price : 0;
-          if (!perp || !currentPrice || isNaN(currentPrice)) {
-            const summaries = await fetchMarketSummary(asset);
-            perp = summaries.find((s: any) =>
-              s?.instrument_name?.includes("PERPETUAL"),
-            );
-            if (perp) {
-              liveData.summary = perp;
-              currentPrice = perp.last || perp.last_price || 0;
-            }
-            console.log("REST Fallback used for", asset, "got:", perp);
-          }
-
-          if (perp) {
-            const assetName =
-              perp.instrument_name ||
-              (asset === "BTC" ? "BTC-PERPETUAL" : "ETH-PERPETUAL");
-            console.log(
-              `🔍 [SignalDebug] Asset: ${asset}, Perp found: ${!!perp}, AssetName: ${assetName}`,
-            );
-
-            // Check SECURE logic against real managed trades from bridge
-            // Trade management logic removed
-
-            let dvol = 0;
-            let optVol = 0;
-            let candles = null;
-            let dailyCandles = null;
-
-            [dvol, optVol, candles, dailyCandles] = await Promise.all([
-              fetchDVOL(asset).catch(() => 60),
-              fetchOptionsVolume(asset).catch(() => []),
-              fetchCandles(assetName, 15).catch(() => null),
-              fetchDailyCandles(assetName).catch(() => null),
-            ]);
-            addLog(
-              `DEBUG: Data fetched for ${asset}: price=${perp?.last || perp?.last_price}, dvol=${dvol}, optVol=${optVol}, candles=${!!candles}, dailyCandles=${!!dailyCandles}`,
-              "SYSTEM",
-            );
-            console.log("ProcessAsset", asset, "Perp:", perp);
-
-
-            let orderBook = liveData.book;
-            if (!orderBook) {
-              try {
-                orderBook = await fetchOrderBook(assetName);
-              } catch (e) {
-                orderBook = { bids: [], asks: [] };
-              }
-            }
-
-            // Normalize ticker data to match summary structure if needed
-            const normalizedPerp = {
-              ...perp,
-              last: perp.last || perp.last_price || 0,
-              instrument_name: assetName,
-            };
-
-            const allSummaries = [
-              btcDataRef.current.summary || btcDataRef.current.ticker,
-              ethDataRef.current.summary || ethDataRef.current.ticker,
-            ]
-              .filter(Boolean)
-              .map((s) => ({
-                ...s,
-                last: s.last || s.last_price || 0,
-                instrument_name: s.instrument_name || "UNKNOWN",
-              }));
-
-            const { signals: rawSignals, signal: rawSignal, analysis } = generateSignal(
-              asset,
-              normalizedPerp,
-              allSummaries,
-              undefined,
-              candles,
-              dailyCandles,
-              orderBook,
-              dvol,
-              optVol,
-              config,
-              asset === "BTC" ? btcTradeBuffer.getRecentTrades() : ethTradeBuffer.getRecentTrades(),
-            );
-            let signal = rawSignal;
-            let signalsToProcess = rawSignals && rawSignals.length > 0 ? rawSignals : (signal ? [signal] : []);
-            
-            if (signalsToProcess.length > 0) {
-              signalsToProcess.forEach((s, idx) => {
-                  const currentMinute = Math.floor(Date.now() / 60000);
-                  const stratAssetId = `${s.strategy}-${s.asset}`;
-                  s.id = `${stratAssetId}-${s.direction}-${currentMinute}-${idx}`;
-              });
-            }
-            if (signal) {
-              const currentMinute = Math.floor(Date.now() / 60000);
-              const stratAssetId = `${signal.strategy}-${signal.asset}`;
-              signal.id = `${stratAssetId}-${signal.direction}-${currentMinute}`;
-            }
-
-            const enrichedAnalysis = {
-              ...analysis,
-              isNewsPaused: false,
-              isDailyLossPaused: sendingRef.current["DAILY_LOSS_LOG"] || false,
-              activeEvent: undefined,
-            };
-
-            const updateState = (prev: MarketAnalysisState | null) => {
-              if (
-                enrichedAnalysis.qualityScore === 0 &&
-                (enrichedAnalysis.primaryBlocker === "INSUFFICIENT DATA" ||
-                  enrichedAnalysis.primaryBlocker === "WAITING FOR DATA")
-              ) {
-                if (prev && prev.price > 0) {
-                  return { ...prev, primaryBlocker: enrichedAnalysis.primaryBlocker };
-                }
-                return enrichedAnalysis;
-              }
-              return enrichedAnalysis;
-            };
-
-            if (asset === "BTC") setBtcAnalysis(updateState);
-            else setEthAnalysis(updateState);
-
-            console.log(
-              `🔍 [SignalDebug] Asset: ${asset}, Signal:`,
-              signal,
-              "HasID:",
-              signal?.id,
-              "AlreadySent:",
-              signal ? sentSignalsRef.current.has(signal.id) : "N/A",
-            );
-            if (signal && !sentSignalsRef.current.has(signal.id)) {
-              lastSignalTimeRef.current = Date.now();
-              noSignalsAlertSentRef.current = false;
-              sentSignalsRef.current.add(signal.id);
-              if (sentSignalsRef.current.size > 1000) {
-                const arr = Array.from(sentSignalsRef.current);
-                sentSignalsRef.current = new Set(arr.slice(arr.length - 500));
-              }
-              setSignals((prev) => [signal, ...prev].slice(0, 50));
-
-              addLog(
-                `🔍 محاولة معالجة إشارة: ${signal.asset} ${signal.direction} (Score: ${signal.qualityScore})`,
-                "SYSTEM",
-              );
-
-              console.log(
-                `🔍 [ExecutionDebug] Asset: ${asset}, autoExecution: ${config.autoExecution}, isPaused: false, dailyLossLog: ${sendingRef.current["DAILY_LOSS_LOG"]}`,
-              );
-              if (config.autoExecution && !false) {
-                const threshold = config.minSignalScore;
-                console.log(
-                  `🔍 [SignalCheck] Asset: ${signal.asset}, Score: ${signal.qualityScore}, Threshold: ${threshold}`,
-                );
-
-                // We trust the tradingAlgo's validation which already incorporates the executionThreshold
-                // or strategy-specific overrides (like Cointegration).
-                  if (signal.qualityScore > 0) {
-                  console.log(`🚀 [CRITICAL] Executing signal:`, signal);
-                  
-                  let shouldExecute = true;
-                  const mappedSymbol = asset === "BTC" ? "BTCUSD" : "ETHUSD";
-                  
-                  // 🔥 Advanced Anti-Margin Call Engine (Static Synchronous) 🔥
-                  const marginLevel = 1000; // In a real environment, fetch this from MT5 bridge state
-                  const accountEquity = (crlStateRef.current && typeof crlStateRef.current.equity === 'number' && crlStateRef.current.equity > 0) ? crlStateRef.current.equity : ((crlStateRef.current && typeof crlStateRef.current.baseline === 'number' && crlStateRef.current.baseline > 0) ? crlStateRef.current.baseline : 3000); // Dynamic from MT5 bridge
-                  const riskResult = checkPortfolioRisk(managedTradesRef.current, signal, config.maxOpenTrades, accountEquity, marginLevel);
-                  
-                  if (!riskResult.isSafeToTrade) {
-                      shouldExecute = false;
-                      addLog(`🛑 Risk Engine BLOCKED Trade: ${riskResult.reason}`, "RISK");
-                      executionDecisionTraceService.initTrace(signal, false);
-                      executionDecisionTraceService.recordPreTrade(false, riskResult.reason, "PORTFOLIO_RISK");
-                      executionDecisionTraceService.recordBlock("PRE_TRADE", riskResult.reason);
-                      executionSanityDiagnosticService.recordTrace(executionDecisionTraceService.getLatestSnapshot());
-                  } else {
-                      if (riskResult.suggestedLotMultiplier < 1.0) {
-                          addLog(`🛡️ Risk Engine Adjusted Position Size (Multiplier: ${riskResult.suggestedLotMultiplier.toFixed(2)}) to prevent overexposure.`, "RISK");
-                          // We apply this multiplier by adding it to the signal object payload
-                          signal.lotMultiplier = riskResult.suggestedLotMultiplier;
-                      }
-                      
-                      const isTradeMatchingDirection = (tradeDir: any, sigDir: any) => {
-                          const td = String(tradeDir).toUpperCase();
-                          const sd = String(sigDir).toUpperCase();
-                          if (sd === 'LONG') {
-                              return td === 'LONG' || td === 'BUY' || td === '0';
-                          }
-                          if (sd === 'SHORT') {
-                              return td === 'SHORT' || td === 'SELL' || td === '1';
-                          }
-                          return false;
-                      };
-                      const activeTrades = managedTradesRef.current.filter(t => t.asset === mappedSymbol && isTradeMatchingDirection(t.direction, signal.direction));
-                      
-                      // 1. Adaptive Drawdown Safe Mode & Lot Scaling (Institutional Circuit Breaker)
-                      const totalActivePnL = managedTradesRef.current.reduce((sum, t) => sum + (Number(t.pnl) || 0), 0);
-                      const currentEquity = accountEquity || 3000;
-                      const floatingDrawdownPercent = currentEquity > 0 ? (Math.max(0, -totalActivePnL) / currentEquity) * 100 : 0;
-                      
-                      let safetyLotMultiplier = 1.0;
-                      if (floatingDrawdownPercent >= 5.0) {
-                          shouldExecute = false;
-                          executionDecisionTraceService.initTrace(signal, false);
-                          executionDecisionTraceService.recordPreTrade(false, "Floating Drawdown >= 5%", "DRAWDOWN_LIMIT");
-                          executionDecisionTraceService.recordBlock("PRE_TRADE", "Floating Drawdown >= 5%");
-                          executionSanityDiagnosticService.recordTrace(executionDecisionTraceService.getLatestSnapshot());
-                      } else if (floatingDrawdownPercent >= 3.0) {
-                          safetyLotMultiplier = 0.25;
-                      } else if (floatingDrawdownPercent >= 1.5) {
-                          safetyLotMultiplier = 0.50;
-                      }
-                      
-                      if (shouldExecute && safetyLotMultiplier < 1.0) {
-                          signal.lotMultiplier = (signal.lotMultiplier || 1.0) * safetyLotMultiplier;
-                      }
-
-                      // 2. Cooldown check
-                      if (shouldExecute) {
-                          const cooldownKey = `${signal.asset}-${signal.direction}`;
-                          const lastExec = lastExecutedTimeRef.current[cooldownKey] || 0;
-                          const elapsedMins = (Date.now() - lastExec) / 60000;
-                          const requiredCooldown = Math.max(5, config.cooldownSameAssetMins || 15);
-                          
-                          if (elapsedMins < requiredCooldown) {
-                              shouldExecute = false;
-                              // Spammy log removed
-                          }
-                      }
-                      
-                      if (shouldExecute && activeTrades.length >= (config.maxTradesPerWave || 15)) {
-                          shouldExecute = false;
-                          // Spammy log removed
-                      }
-                      
-                      if (shouldExecute && activeTrades.length > 0) {
-                          const currentPrice = signal.entry || enrichedAnalysis.price;
-                          const dvol = enrichedAnalysis.dvol || 50; // Annualized volatility percentage
-                          
-                          // Calculate Expected Daily Move USD based on DVOL
-                          const expectedDailyMovePercent = (dvol / 100) / Math.sqrt(365);
-                          const expectedDailyMoveUSD = currentPrice * expectedDailyMovePercent;
-                          
-                          const baseDistance = (config.dynamicVolSpacing || 0.25) * expectedDailyMoveUSD;
-                                                    // --- Smart Hierarchical Reinforcement (التعزيز الهرمي الذكي) ---
-                          let isPyramiding = false;
-                          let pyramidingDiscount = 1.0;
-                          
-                          // Check if we are in profit and momentum is strong (Pyramiding condition)
-                          if (activeTrades.length > 0) {
-                              const lastTrade = activeTrades.reduce((latest, current) => {
-                                  return (current.ticket > latest.ticket) ? current : latest;
-                              }, activeTrades[0]);
-                              
-                              const isLong = signal.direction === 'LONG';
-                              const profitDistance = isLong ? (currentPrice - (lastTrade.entryPrice || lastTrade.openPrice || 0)) : ((lastTrade.entryPrice || lastTrade.openPrice || 0) - currentPrice);
-                              
-                              if (profitDistance > 0 && (enrichedAnalysis.regime === 'MOMENTUM_TREND' || enrichedAnalysis.regime === 'HIGH_VOLATILITY')) {
-                                  isPyramiding = true;
-                                  pyramidingDiscount = 0.75; // Allow slightly closer entries when riding a strong trend
-                              }
-                          }
-                          
-                          const progressiveMultiplier = 1 + (activeTrades.length - 1) * (isPyramiding ? 0.3 : 0.5);
-                          const minDistanceAdjusted = baseDistance * progressiveMultiplier * pyramidingDiscount;
-
-                          for (const trade of activeTrades) {
-                              const tradeDistance = Math.abs((trade.entryPrice || trade.openPrice || 0) - currentPrice);
-                              if (tradeDistance < minDistanceAdjusted) {
-                                  shouldExecute = false;
-                                  executionDecisionTraceService.initTrace(signal, false);
-                                  executionDecisionTraceService.recordPreTrade(false, `Too close to existing trade. Distance: ${tradeDistance.toFixed(2)}, Min: ${minDistanceAdjusted.toFixed(2)}`, "PYRAMIDING_DISTANCE");
-                                  executionDecisionTraceService.recordBlock("PRE_TRADE", "Too close to existing trade");
-                                  executionSanityDiagnosticService.recordTrace(executionDecisionTraceService.getLatestSnapshot());
-                                  break;
-                              }
-                          }
-                          
-                          if (shouldExecute && isPyramiding) {
-                               // Pyramiding reduces the lot size for the new entry to maintain a pyramid shape (largest at bottom)
-                               // Apply a 0.6x multiplier for each subsequent entry
-                               const pyramidScale = Math.pow(0.6, activeTrades.length);
-                               signal.lotMultiplier = (signal.lotMultiplier || 1.0) * pyramidScale;
-                               addLog(`🔼 [PYRAMIDING] تعزيز هرمي في اتجاه الربح للزخم القوي. تم تقليص حجم العقد بمعامل ${pyramidScale.toFixed(2)} لحماية الأرباح.`, 'STRATEGY_SWITCH');
-                          }
-                      }
-
-                      if (shouldExecute) {
-                        let actionType = "ENTRY";
-                        // 1. Flip (Reversal) Logic
-                        if (config.flipEnabled && enrichedAnalysis.reversalProbability >= (config.flipSensitivityScore || 85)) {
-                          actionType = "FLIP";
-                          addLog(`🔄 تم تفعيل نظام الانعكاس (FLIP) - احتمالية الانعكاس: ${enrichedAnalysis.reversalProbability.toFixed(1)}%`, 'STRATEGY_SWITCH');
-                        } 
-                        // 2. Hedge Logic (When uncertain or volatile)
-                        else if (config.autoHedgeEnabled && signal.qualityScore < 85 && Math.abs(enrichedAnalysis.vwapDeviation) > 0.02) {
-                          actionType = "HEDGE";
-                          addLog(`🛡️ تم تفعيل نظام الهيدج (HEDGE) - تحوط بسبب الانحراف: ${(enrichedAnalysis.vwapDeviation * 100).toFixed(2)}%`, 'HEDGE');
-                        }
-      
-                        const cooldownKey = `${signal.asset}-${signal.direction}`;
-                        // Fast lock to prevent race conditions during async execution
-                        lastExecutedTimeRef.current[cooldownKey] = Date.now();
-
-                        // تنفيذ مباشر بعد المرور بخوارزمية التداول
-                        handleSendSignal(
-                          signalsToProcess,
-                          enrichedAnalysis,
-                          actionType
-                        ).then(success => {
-                            if (!success) {
-                              // Revert fast lock on failure
-                              lastExecutedTimeRef.current[cooldownKey] = 0;
-                              addLog(
-                                `⚠️ إشارة تم حظرها داخلياً في طبقة التنفيذ! (Compliance)`,
-                                "RISK",
-                              );
-                            } else {
-                              addLog(`✅ تم إرسال الإشارة بنجاح للجسر! (النوع: ${actionType})`, "EXEC");
-                            }
-                        });
-                      }
-                  }
-                } else {
-                  addLog(`⚠️ Signal Block: Invalid signal score 0`, "SYSTEM");
-                }
-              } else {
-                console.log(
-                  `🔍 [SignalBlock] Execution Blocked: autoExecution=${config.autoExecution}, isPaused=false, dailyLossPaused=${sendingRef.current["DAILY_LOSS_LOG"]}`,
-                );
-                addLog(
-                  `⚠️ Execution Blocked: autoExecution=${config.autoExecution}, isPaused=false, dailyLossPaused=${sendingRef.current["DAILY_LOSS_LOG"]}`,
-                  "SYSTEM",
-                );
-              }
-            }
-          } else {
-            console.log(`🔍 [SignalDebug] Asset: ${asset}, Perp NOT found.`);
-            const fallbackAnalysis = {
-              asset,
-              price: 0,
-              trend: "NEUTRAL",
-              volatility: 0,
-              volume: 0,
-              rSquared: 0,
-              dvol: 0,
-              hurst: 0.5,
-              rsi: 50,
-              volRatio: 1,
-              yearlyHigh: 0,
-              yearlyLow: 0,
-              pricePositionRank: 50,
-              regime: "CHOPPY/NOISE",
-              qualityScore: 0,
-              primaryBlocker: "WAITING FOR DATA",
-              isCooldownActive: false,
-              cooldownRemaining: 0,
-              isCorrelatedBlocked: false,
-              liquidityGap: 0,
-              toxicityScore: 0,
-              estimatedSlippage: 0,
-              dataLatencyMs: 0,
-              scoreBreakdown: [],
-              dominantFactor: "NONE",
-              reversalProbability: 0,
-              trendStrength: 0,
-              trendDirection: "NEUTRAL",
-              fundingRate: 0,
-              openInterest: 0,
-              isNewsPaused: false,
-              isDailyLossPaused: sendingRef.current["DAILY_LOSS_LOG"] || false,
-              mtfStatus: {
-                dailyTrend: "NEUTRAL",
-                h4Regime: "CHOPPY/NOISE",
-                m15Trigger: false,
-              },
-              vwapDeviation: 0,
-              vwapZScore: 0,
-              vwapMain: 0,
-              vwapUpper: 0,
-              vwapLower: 0,
-            };
-            const updateFallbackState = (prev: MarketAnalysisState | null) => {
-              return prev
-                ? { ...prev, primaryBlocker: "WAITING FOR DATA" }
-                : (fallbackAnalysis as any);
-            };
-            if (asset === "BTC") setBtcAnalysis(updateFallbackState);
-            else setEthAnalysis(updateFallbackState);
-          }
-        } catch (e) {
-          console.error(`Error processing asset ${asset}:`, e);
-        }
-      };
-      // Check for signal absence
-      const timeSinceLastSignal = Date.now() - lastSignalTimeRef.current;
-      // Removed 5-min and 15-min inactivity alerts per user request: markets can be quiet for long periods.
-
-      // Process assets with staggering
-      await processAsset("BTC");
-      await new Promise((r) => setTimeout(r, 2000)); // 2s stagger
-      await processAsset("ETH");
-    } finally {
-      isProcessingRef.current = false;
-    }
-  }, [config, handleSendSignal, addLog]);
-
-  const updateMarketDataRef = useRef(updateMarketData);
-  useEffect(() => {
-    updateMarketDataRef.current = updateMarketData;
-  }, [updateMarketData]);
-
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    let timeoutRef: NodeJS.Timeout;
-    let activeController: AbortController | null = null;
-    const pollManagedTrades = async () => {
-      try {
-        const effectiveUrl = getEffectiveUrl(config.webhookUrl);
-        activeController = new AbortController();
-        const id = setTimeout(() => {
-          if (activeController) activeController.abort();
-        }, 2500);
-        
-        const res = await fetch(
-          `${effectiveUrl}/api/bridge/managed-trades`,
-          { signal: activeController.signal }
-        );
-        clearTimeout(id);
-        if (res.ok) {
-          const data = await res.json();
-          const trades = (data as any).trades || [];
-          if (JSON.stringify(trades) !== JSON.stringify(managedTradesRef.current)) {
-            setManagedTrades(trades);
-            managedTradesRef.current = trades;
-          }
-          if ((data as any).crlState) {
-              if (JSON.stringify((data as any).crlState) !== JSON.stringify(crlStateRef.current)) {
-                setCrlState((data as any).crlState);
-              }
-          }
-        }
-      } catch (e) {
-        // silent fail
-      }
-      timeoutRef = setTimeout(pollManagedTrades, 15000);
-    };
-    if (config.webhookUrl) {
-      pollManagedTrades();
-    }
-    return () => {
-      if (timeoutRef) clearTimeout(timeoutRef);
-      if (activeController) activeController.abort();
-    };
-  }, [config.webhookUrl]);
+  // ═══════════════════════════════════════
+  //  MANUAL CLOSE (keeps this local handler)
+  // ═══════════════════════════════════════
 
   const handleManualClose = useCallback(
     async (ticket: string) => {
-      // Create a dummy signal to close specific ticket
       const closeSignal = {
         id: `MANUAL_CLOSE_${Date.now()}`,
         timestamp: Date.now(),
@@ -1190,147 +174,35 @@ const App: React.FC = () => {
     [handleSendSignal, addLog],
   );
 
+  // ═══════════════════════════════════════
+  //  30s POLLING LOOP: calls processAsset via useSignalEngine
+  // ═══════════════════════════════════════
+
   useEffect(() => {
-    let timeoutRef: NodeJS.Timeout;
-    const runUpdate = async () => {
+    const intervalId = setInterval(async () => {
       if (connectionDisabledRef.current) return;
-      await updateMarketDataRef.current();
-      timeoutRef = setTimeout(runUpdate, 30000);
-    };
-    runUpdate();
-    return () => {
-      if (timeoutRef) clearTimeout(timeoutRef);
-    };
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem(
-      `arkon_config_v${CURRENT_VERSION}`,
-      JSON.stringify(config),
-    );
-  }, [config]);
-
-  useEffect(() => {
-    // Calculate performance metrics from tradeHistory and update config.strategyPerformance
-    const newPerformance = { ...config.strategyPerformance };
-
-    // Reset performance metrics
-    Object.keys(newPerformance).forEach((key) => {
-      newPerformance[key as StrategyType] = {
-        ...newPerformance[key as StrategyType],
-        wins: 0,
-        losses: 0,
-        totalProfitPoints: 0,
-        totalLossPoints: 0,
-        successScore: 0,
-        totalTrades: 0,
-        winRate: 0,
-        profitFactor: 0,
-        sharpeRatio: 0,
-        maxDrawdown: 0,
-        lastTradeTime: 0,
-        consecutiveLosses: 0,
-      };
-    });
-
-    // Sort history by time to calculate consecutive losses and drawdown properly
-    const sortedHistory = [...tradeHistory].sort(
-      (a, b) => a.closeTime - b.closeTime,
-    );
-
-    const equityCurves: Record<string, number[]> = {};
-
-    sortedHistory.forEach((trade) => {
-      const strat = trade.strategy as StrategyType;
-      if (newPerformance[strat]) {
-        const pnl = trade.pnlPoints || 0;
-        newPerformance[strat].totalTrades += 1;
-        newPerformance[strat].lastTradeTime = Math.max(
-          newPerformance[strat].lastTradeTime,
-          trade.closeTime,
-        );
-
-        if (!equityCurves[strat]) equityCurves[strat] = [0];
-        const currentEquity =
-          equityCurves[strat][equityCurves[strat].length - 1] + pnl;
-        equityCurves[strat].push(currentEquity);
-
-        if (pnl > 0) {
-          newPerformance[strat].wins += 1;
-          newPerformance[strat].totalProfitPoints += pnl;
-          newPerformance[strat].consecutiveLosses = 0;
-        } else {
-          newPerformance[strat].losses += 1;
-          newPerformance[strat].totalLossPoints += Math.abs(pnl);
-          newPerformance[strat].consecutiveLosses += 1;
-        }
-      }
-    });
-
-    // Calculate advanced metrics
-    Object.keys(newPerformance).forEach((key) => {
-      const strat = key as StrategyType;
-      const perf = newPerformance[strat];
-
-      if (perf.totalTrades > 0) {
-        perf.winRate = perf.wins / perf.totalTrades;
-        perf.profitFactor =
-          perf.totalLossPoints !== 0
-            ? perf.totalProfitPoints / perf.totalLossPoints
-            : perf.totalProfitPoints > 0
-              ? 2
-              : 0;
-
-        // Calculate Max Drawdown
-        const curve = equityCurves[strat] || [0];
-        let peak = curve[0];
-        let maxDD = 0;
-        for (const val of curve) {
-          if (val > peak) peak = val;
-          const dd = peak - val;
-          if (dd > maxDD) maxDD = dd;
-        }
-        perf.maxDrawdown = maxDD;
-
-        // Calculate Sharpe Ratio (simplified: avg trade / std dev of trades)
-        const trades = sortedHistory
-          .filter((t) => t.strategy === strat)
-          .map((t) => t.pnlPoints || 0);
-        if (trades.length > 1) {
-          const avg = trades.reduce((a, b) => a + b, 0) / trades.length;
-          const variance =
-            trades.reduce((a, b) => a + Math.pow(b - avg, 2), 0) /
-            (trades.length - 1);
-          const stdDev = Math.sqrt(variance);
-          perf.sharpeRatio =
-            stdDev !== 0 ? (avg / stdDev) * Math.sqrt(trades.length) : 0; // Annualized-ish
-        }
-
-        // Success score: winRate * 100 * (profitFactor > 1 ? 1.2 : 0.8) - penalty for high DD
-        let score = perf.winRate * 100 * (perf.profitFactor > 1 ? 1.2 : 0.8);
-        if (perf.maxDrawdown > 1000) score -= 20; // Arbitrary penalty for high drawdown
-        if (perf.consecutiveLosses >= 3) score -= 15; // Penalty for losing streak
-        perf.successScore = Math.round(Math.max(0, Math.min(100, score)));
-
-        // Auto-disable if score < threshold and strategy has trades
-        if (
-          config.autoDisableThreshold > 0 &&
-          perf.successScore < config.autoDisableThreshold
-        ) {
-          perf.isEnabled = false;
-        }
-      }
-    });
-
-    if (
-      JSON.stringify(newPerformance) !==
-      JSON.stringify(config.strategyPerformance)
-    ) {
-      setConfig((prev) => ({ ...prev, strategyPerformance: newPerformance }));
-    }
-  }, [tradeHistory, config.autoDisableThreshold]);
+      await processAsset("BTC");
+      await new Promise((r) => setTimeout(r, PROCESS_ASSET_STAGGER_MS));
+      await processAsset("ETH");
+      await new Promise((r) => setTimeout(r, PROCESS_ASSET_STAGGER_MS));
+      await processAsset("GOLD");
+    }, MARKET_POLL_INTERVAL_MS);
+    return () => clearInterval(intervalId);
+  }, [processAsset, connectionDisabledRef]);
 
   const totalPnL = 0;
+  const liveStrategySources = strategyRegistryService.getEnabledStrategies();
+  const liveAssetSources = new MultiAssetManager(
+    async () => ({
+      BTCUSD: 50000,
+      ETHUSD: 2500,
+      SOLUSD: 100,
+      XRPUSD: 0.5,
+      GOLD: 2400,
+      USDT: 1,
+    }),
+    async () => []
+  ).getSupportedAssets();
 
   return (
     <div
@@ -1466,6 +338,51 @@ const App: React.FC = () => {
                       </div>
                       <div className="grid grid-cols-2 gap-8">
                         <div className="space-y-4">
+                          <div className="space-y-5 p-6 bg-zinc-900/40 rounded-3xl border border-zinc-800">
+                            <div className="flex items-center justify-between">
+                              <h4 className="text-sm font-black text-white uppercase tracking-widest">
+                                Multi-Asset Rebalancing
+                              </h4>
+                              <span className="text-[10px] text-zinc-500 font-black uppercase tracking-[0.2em]">
+                                4.2
+                              </span>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={handlePreviewRebalance}
+                              disabled={isRebalancing}
+                              className="w-full py-5 bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-black rounded-2xl hover:bg-emerald-500/25 disabled:opacity-60 transition-all text-[11px] uppercase tracking-[0.2em]"
+                            >
+                              {isRebalancing ? 'Calculating Rebalance...' : 'Rebalance Portfolio (Preview)'}
+                            </button>
+
+                            {rebalanceOrders.length === 0 ? (
+                              <div className="text-[11px] text-zinc-500 bg-zinc-950/60 border border-zinc-900 rounded-2xl p-4">
+                                لا توجد أوامر إعادة توازن حالياً (أو أن الانحرافات ضمن الحدود).
+                              </div>
+                            ) : (
+                              <div className="space-y-3 max-h-64 overflow-y-auto custom-scrollbar">
+                                {rebalanceOrders.map((order, idx) => (
+                                  <div key={`${order.symbol}-${idx}`} className="bg-zinc-950/70 border border-zinc-900 rounded-2xl p-4">
+                                    <div className="flex justify-between items-center mb-2">
+                                      <span className="text-white font-black text-xs">{order.symbol}</span>
+                                      <span className={`text-xs font-black ${order.action === 'BUY' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                        {order.action}
+                                      </span>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2 text-[11px] text-zinc-400 font-mono">
+                                      <span>Qty: {order.quantity.toFixed(6)}</span>
+                                      <span>Notional: ${order.notionalUSD.toFixed(2)}</span>
+                                      <span>Target: {(order.targetWeight * 100).toFixed(1)}%</span>
+                                      <span>Current: {(order.currentWeight * 100).toFixed(1)}%</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
                           <label className="text-[11px] font-black text-zinc-500 uppercase tracking-widest">
                             Bot Token
                           </label>
@@ -1519,6 +436,39 @@ const App: React.FC = () => {
                     </div>
 
                     <div className="space-y-8">
+                      <div className="space-y-5 p-6 bg-zinc-900/40 rounded-3xl border border-zinc-800">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-sm font-black text-white uppercase tracking-widest">
+                            WebSocket Telemetry
+                          </h4>
+                          <div className="flex items-center gap-2">
+                            <div
+                              className={`w-2.5 h-2.5 rounded-full ${marketWsConnected ? "bg-cyan-400 shadow-[0_0_10px_#22d3ee]" : "bg-zinc-600"}`}
+                            ></div>
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
+                              {marketWsConnected ? "CONNECTED" : "FALLBACK"}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[11px] font-mono">
+                          <div className="bg-zinc-950/60 border border-zinc-900 rounded-2xl p-4">
+                            <div className="text-zinc-500 mb-1">WS URL</div>
+                            <div className="text-cyan-300 break-all">{marketWsUrl || "N/A"}</div>
+                          </div>
+                          <div className="bg-zinc-950/60 border border-zinc-900 rounded-2xl p-4">
+                            <div className="text-zinc-500 mb-1">Reconnect Attempts</div>
+                            <div className="text-white">{wsReconnectAttempts}</div>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={manualReconnect}
+                          className="w-full py-5 bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-black rounded-2xl hover:bg-cyan-500/25 transition-all text-[11px] uppercase tracking-[0.2em]"
+                        >
+                          Reconnect Now
+                        </button>
+                      </div>
+
                       <div className="space-y-4">
                         <div className="flex justify-between items-center">
                           <label className="text-[11px] font-black text-zinc-500 uppercase tracking-widest">
@@ -1667,7 +617,6 @@ const App: React.FC = () => {
                             const isOnline = await checkBridgeStatus(
                               config.webhookUrl,
                             );
-                            setBridgeStatus(isOnline);
                             addLog(
                               isOnline
                                 ? "✅ الجسر متصل ومستقر"
@@ -1711,7 +660,7 @@ const App: React.FC = () => {
 
                 {/* 10. DIAGNOSTICS */}
                 {settingsTab === "DIAGNOSTICS" && (
-                  <DiagnosticsSettings />
+                  <DiagnosticsSettings config={config} />
                 )}
               </div>
 
@@ -1756,6 +705,13 @@ const App: React.FC = () => {
               <span className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em]">
                 {bridgeStatus ? "Bridge Relay Connected" : "Relay Disconnected"}
               </span>
+              <span className="text-[10px] font-black text-zinc-800 uppercase tracking-[0.3em]">|</span>
+              <div
+                className={`w-2.5 h-2.5 rounded-full ${marketWsConnected ? "bg-cyan-400 shadow-[0_0_12px_#22d3ee]" : "bg-zinc-600 shadow-[0_0_12px_#52525b]"}`}
+              ></div>
+              <span className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em]">
+                {marketWsConnected ? "Market WS Connected" : "Market WS Fallback"}
+              </span>
               <span className="text-[10px] font-black text-zinc-800 uppercase tracking-[0.3em]">
                 | High-Latency Protected
               </span>
@@ -1789,6 +745,11 @@ const App: React.FC = () => {
                 <MarketStats
                   title="ETH/USD ALGO"
                   state={ethAnalysis}
+                  config={config}
+                />
+                <MarketStats
+                  title="XAU/USD ALGO"
+                  state={goldAnalysis}
                   config={config}
                 />
                 {/* Active Trades Panel moved here to utilize space */}
@@ -1875,6 +836,50 @@ const App: React.FC = () => {
                       />
                     ))
                   )}
+                </div>
+
+                <div className="mt-10 grid grid-cols-1 xl:grid-cols-2 gap-6">
+                  <div className="rounded-[2rem] border border-zinc-900 bg-zinc-950/60 p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-sm font-black uppercase tracking-[0.25em] text-white">Strategy Registry</h4>
+                      <span className="text-[10px] text-zinc-500 font-black uppercase">{liveStrategySources.length} enabled</span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[260px] overflow-y-auto custom-scrollbar pr-1">
+                      {liveStrategySources.map((strategy) => (
+                        <div key={strategy.strategyId} className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4">
+                          <div className="flex justify-between items-start gap-3">
+                            <div>
+                              <div className="text-white font-black text-sm">{strategy.strategyId}</div>
+                              <div className="text-[11px] text-zinc-500">{strategy.style}</div>
+                            </div>
+                            <span className="text-[10px] font-black uppercase text-amber-400">{strategy.thematicGroup}</span>
+                          </div>
+                          <div className="mt-3 text-[10px] text-zinc-400">
+                            Assets: {strategy.assetScope.join(', ')}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="rounded-[2rem] border border-zinc-900 bg-zinc-950/60 p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-sm font-black uppercase tracking-[0.25em] text-white">Supported Assets</h4>
+                      <span className="text-[10px] text-zinc-500 font-black uppercase">{liveAssetSources.length} frames</span>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {liveAssetSources.map((asset) => (
+                        <div key={asset.symbol} className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4">
+                          <div className="text-white font-black text-sm">{asset.symbol}</div>
+                          <div className="text-[11px] text-zinc-500 mt-1">{asset.volatility}</div>
+                          <div className="mt-2 h-1.5 rounded-full bg-zinc-800 overflow-hidden">
+                            <div className="h-full rounded-full bg-gradient-to-r from-amber-500 to-cyan-400" style={{ width: `${Math.max(20, Math.min(100, asset.weight * 100))}%` }} />
+                          </div>
+                          <div className="mt-2 text-[10px] text-zinc-400">Weight {Math.round(asset.weight * 100)}%</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
             </>

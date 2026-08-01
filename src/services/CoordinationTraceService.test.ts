@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { coordinationTraceService } from './CoordinationTraceService';
-import { TradingSignal } from '../types';
+import { TradingSignal, SignalDirection, SignalStrength } from '../types';
 
 describe('CoordinationTraceService', () => {
     it('should initialize with null snapshot', () => {
@@ -10,18 +10,26 @@ describe('CoordinationTraceService', () => {
     it('should update and retrieve the latest snapshot', () => {
         const mockSignal: TradingSignal = {
             id: 'mock-1',
+            timestamp: Date.now(),
             asset: 'BTC-PERP',
-            direction: 'LONG',
-            strategy: 'TEST_STRATEGY',
+            direction: SignalDirection.LONG,
+            strategy: 'BTC_TREND',
             qualityScore: 95,
             reasoning: 'Test reason',
+            strength: SignalStrength.STRONG,
+            entry: 100,
+            stopLoss: 90,
+            takeProfit: 120,
+            tp1: 110,
+            tp2: 120,
+            details: {} as any,
             metadata: {}
         };
 
         coordinationTraceService.updateSnapshot(
             [mockSignal],
-            [{ originalSignal: mockSignal, suppressed: false }],
-            { selectedSignals: [{ signal: mockSignal, reason: 'selected' }], rejectedSignals: [] },
+            [{ originalSignal: mockSignal, suppressed: false, adjustedSizeFactor: 1 }],
+            { selectedSignals: [{ signal: mockSignal, selected: true, finalScore: 95, arbitrationNotes: ['selected'] }], suppressedSignals: [] },
             [mockSignal]
         );
 

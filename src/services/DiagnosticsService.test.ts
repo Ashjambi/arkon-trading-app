@@ -85,4 +85,18 @@ describe('DiagnosticsService', () => {
         expect(snap1).not.toBe(snap2); // Different instances
         expect(snap1.timestampUtc).toBeDefined();
     });
+
+    it('7. tracks hunter mode decisions and executed trades', () => {
+        diagnosticsService.recordHunterDecision(true, 91, ['signal=95'], []);
+        diagnosticsService.recordHunterDecision(false, 55, ['signal=60'], ['SPREAD_TOO_WIDE']);
+        diagnosticsService.recordHunterTradeExecuted();
+
+        const snap = diagnosticsService.getSnapshot();
+        expect(snap.counters.hunterEvaluated).toBe(2);
+        expect(snap.counters.hunterEnabled).toBe(1);
+        expect(snap.counters.hunterRejected).toBe(1);
+        expect(snap.counters.hunterTradesExecuted).toBe(1);
+        expect(snap.counters.hunterRejectedByReason.SPREAD_TOO_WIDE).toBe(1);
+        expect(typeof snap.signalFlow.lastHunterEnabled).toBe('boolean');
+    });
 });

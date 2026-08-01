@@ -1,0 +1,20 @@
+C:\Program Files\WindowsApps\Microsoft.PowerShell_7.6.4.0_x64__8wekyb3d8bbwe
+c:\Users\15023063\AppData\Roaming\Code\User\globalStorage\github.copilot-chat\debugCommand
+c:\Users\15023063\AppData\Roaming\Code\User\globalStorage\github.copilot-chat\copilotCli
+C:\WINDOWS\system32
+C:\WINDOWS
+C:\WINDOWS\System32\Wbem
+C:\WINDOWS\System32\WindowsPowerShell\v1.0\
+C:\WINDOWS\System32\OpenSSH\
+C:\Program Files (x86)\Kodak\Document Imaging\kds_s2000\Smart Touch\
+C:\Program Files\dotnet\
+C:\Users\15023063\.local\bin
+C:\Users\15023063\AppData\Local\Microsoft\WindowsApps
+C:\Users\15023063\AppData\Local\Programs\Git\cmd
+C:\Users\15023063\AppData\Local\Programs\cursor\resources\app\bin
+C:\Users\15023063\AppData\Local\Programs\Qoder\bin
+C:\Users\15023063\AppData\Local\Programs\Antigravity\bin
+C:\Users\15023063\AppData\Local\Programs\Ollama
+C:\Users\15023063\AppData\Local\Programs\Microsoft VS Code\bin
+C:\Users\15023063\AppData\Local\Programs\Antigravity IDE\bin
+C:\Users\15023063\.lmstudio\bin

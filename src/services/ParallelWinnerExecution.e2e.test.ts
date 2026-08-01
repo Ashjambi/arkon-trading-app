@@ -5,7 +5,7 @@ import { preTradeRiskGuard } from './PreTradeRiskGuard';
 import { tradingControlService } from './TradingControlService';
 import { executionDecisionTraceService } from './ExecutionDecisionTraceService';
 import * as webhookService from './webhookService';
-import { TradingSignal, MarketAnalysisState } from '../types';
+import { TradingSignal, MarketAnalysisState, SignalDirection } from '../types';
 
 vi.mock('./webhookService', () => ({
     sendToWebhook: vi.fn(),
@@ -73,7 +73,7 @@ describe('Parallel Winner Execution E2E', () => {
     const createDummySignal = (id: string, strategy: string, score: number = 90): TradingSignal => ({
         id,
         asset: 'BTC-PERP',
-        direction: 'LONG',
+        direction: SignalDirection.LONG,
         strategy: strategy as any,
         qualityScore: score,
         reasoning: 'Test',
@@ -146,6 +146,7 @@ describe('Parallel Winner Execution E2E', () => {
         
         vi.mocked(tradingControlService.evaluateControlState)
             .mockReturnValueOnce('NORMAL')
+            .mockReturnValueOnce('NORMAL')
             .mockReturnValueOnce('BLOCKED');
             
         vi.mocked(tradingControlService.getSnapshot).mockReturnValue({
@@ -217,7 +218,7 @@ describe('Parallel Winner Execution - STRESS SCENARIOS', () => {
     });
 
     const createDummySignal = (id: string, score: number = 90): TradingSignal => ({
-        id, asset: 'BTC-PERP', direction: 'LONG', strategy: 'S1' as any, qualityScore: score,
+        id, asset: 'BTC-PERP', direction: SignalDirection.LONG, strategy: 'S1' as any, qualityScore: score,
         reasoning: 'Test', entry: 50000, stopLoss: 49000, takeProfit: 52000,
         tp1: 51000, tp2: 52000, strength: 'STRONG' as any, timestamp: Date.now(),
         metadata: {}, recommendedSize: 1.0, details: { mtfStatus: { dailyTrend: 'UP', h4Regime: 'TREND', m15Trigger: true } } as any

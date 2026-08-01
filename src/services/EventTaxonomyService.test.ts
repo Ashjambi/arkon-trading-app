@@ -1,0 +1,727 @@
+ /**
+ * EventTaxonomyService.test.ts
+ *
+ * Tests for:
+ * 1. Repeated ADR block across polling cycles — correct dedup behavior and "today" semantics
+ * 2. Distinct asset / strategy / direction / reasonCode events do not collapse
+ * 3. A real 401 AUTH failure produces exactly one unique bridge incident
+ * 4. Repeated WS 3001 failures do not open the execution breaker
+ * 5. Real max exposure, drawdown, daily-loss, and tail-risk blocks remain RISK_BLOCKED
+ * 6. Zero-position account has zero active risk blocks, but still reports real AUTH/CONNECTIVITY incidents
+ * 7. Circuit breaker scope: VALIDATION, RISK_GATE, COMPLIANCE, ADR, CB-OPEN never increment consecutiveBreakerFailures
+ */
+
+import { describe, it, test, expect, beforeEach, afterEach, vi } from 'vitest';
+import { EventTaxonomyService } from './EventTaxonomyService';
+
+describe('EventTaxonomyService — Day-Bucket Accounting (Option B)', () => {
+  let service: EventTaxonomyService;
+
+  beforeEach(() => {
+    service = new EventTaxonomyService();
+    // Allow fast time travel by mocking Date.now
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-01T10:00:00Z'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  // ─── Test 1: Repeated ADR block across polling cycles ─────────────
+
+  test('same ADR block is deduplicated within 60s window and day-bucket', () => {
+    // Cycle 1 at T+0
+    const r1 = service.recordSignalFiltered({
+      correlationId: 'sig_001',
+      reasonCode: 'ADR',
+      reason: 'Downside ADR exhaustion — SHORT blocked',
+      asset: 'BTC',
+      strategy: 'BTC_TREND',
+      direction: 'SHORT',
+      filterType: 'ADR',
+    });
+    expect(r1).toBe(true); // first occurrence = unique
+    let snap = service.getSnapshot();
+    expect(snap.uniqueSignalFiltersToday).toBe(1);
+
+    // Cycle 2 at T+30s (same 60s dedup window, same asset|reasonCode|strategy|direction)
+    // The 60-second rolling dedup catches this — not a new unique event
+    vi.advanceTimersByTime(30_000);
+    const r2 = service.recordSignalFiltered({
+      correlationId: 'sig_002',
+      reasonCode: 'ADR',
+      reason: 'Downside ADR exhaustion — SHORT blocked',
+      asset: 'BTC',
+      strategy: 'BTC_TREND',
+      direction: 'SHORT',
+      filterType: 'ADR',
+    });
+    expect(r2).toBe(false); // 60s rolling dedup: same asset|reasonCode within window
+    snap = service.getSnapshot();
+    expect(snap.uniqueSignalFiltersToday).toBe(1); // still 1 unique event today
+
+    // Cycle 3 at T+90s (new 60s dedup window, same day — day-bucket still counts same key)
+    vi.advanceTimersByTime(60_000);
+    const r3 = service.recordSignalFiltered({
+      correlationId: 'sig_003',
+      reasonCode: 'ADR',
+      reason: 'Downside ADR exhaustion — SHORT blocked',
+      asset: 'BTC',
+      strategy: 'BTC_TREND',
+      direction: 'SHORT',
+      filterType: 'ADR',
+    });
+    expect(r3).toBe(true); // new 60s window, but day-bucket key same — updates occurrenceCount
+    snap = service.getSnapshot();
+    expect(snap.uniqueSignalFiltersToday).toBe(1); // still 1 unique event all day
+
+    // Verify occurrence tracking: all 3 calls share the same day-bucket key
+    const records = service.getDailyRecords();
+    const key = 'BTC|BTC_TREND|SHORT|ADR|SIGNAL_FILTERED';
+    expect(records.has(key)).toBe(true);
+    // Cycle 1 and Cycle 3 both reached the day-bucket (r2 was suppressed by 60s window),
+    // so occurrenceCount = 2
+    expect(records.get(key)!.occurrenceCount).toBe(2);
+    expect(records.get(key)!.firstSeen).toBeLessThan(records.get(key)!.lastSeen);
+  });
+
+  // ─── Test 2: Distinct events do not collapse ──────────────────────
+
+  test('distinct asset/strategy/direction/reasonCode events produce separate unique counts', () => {
+    // ADR filter on BTC SHORT
+    service.recordSignalFiltered({
+      correlationId: 's1',
+      reasonCode: 'ADR',
+      reason: 'ADR exhaustion SHORT',
+      asset: 'BTC',
+      strategy: 'BTC_TREND',
+      direction: 'SHORT',
+      filterType: 'ADR',
+    });
+
+    // ADR filter on BTC LONG (different direction → different key)
+    service.recordSignalFiltered({
+      correlationId: 's2',
+      reasonCode: 'ADR',
+      reason: 'ADR exhaustion LONG',
+      asset: 'BTC',
+      strategy: 'BTC_TREND',
+      direction: 'LONG',
+      filterType: 'ADR',
+    });
+
+    // DVOL filter on BTC SHORT (different reasonCode → different key)
+    service.recordSignalFiltered({
+      correlationId: 's3',
+      reasonCode: 'DVOL',
+      reason: 'DVOL too high',
+      asset: 'BTC',
+      strategy: 'BTC_SCALPER',
+      direction: 'SHORT',
+      filterType: 'DVOL',
+    });
+
+    // ADR filter on ETH SHORT (different asset → different key)
+    service.recordSignalFiltered({
+      correlationId: 's4',
+      reasonCode: 'ADR',
+      reason: 'ADR exhaustion SHORT',
+      asset: 'ETH',
+      strategy: 'ETH_TREND',
+      direction: 'SHORT',
+      filterType: 'ADR',
+    });
+
+    const snap = service.getSnapshot();
+    // Direction is now included in the 60s dedup extraKey (asset|strategy|direction|reasonCode),
+    // so s1 (BTC|BTC_TREND|SHORT|ADR) and s2 (BTC|BTC_TREND|LONG|ADR) are distinct.
+    // 4 distinct day-bucket events survive 60s dedup: BTC|BTC_TREND|SHORT|ADR,
+    // BTC|BTC_TREND|LONG|ADR, BTC|BTC_SCALPER|SHORT|DVOL, ETH|ETH_TREND|SHORT|ADR
+    expect(snap.uniqueSignalFiltersToday).toBe(4);
+
+    // Now repeat s1 - same extraKey BTC|BTC_TREND|SHORT|ADR within 60s window → deduped, no increment
+    service.recordSignalFiltered({
+      correlationId: 's5',
+      reasonCode: 'ADR',
+      reason: 'ADR exhaustion SHORT',
+      asset: 'BTC',
+      strategy: 'BTC_TREND',
+      direction: 'SHORT',
+      filterType: 'ADR',
+    });
+
+    const snap2 = service.getSnapshot();
+    // s5 shares the same extraKey BTC|BTC_TREND|SHORT|ADR as s1 within the 60s window → deduped
+    expect(snap2.uniqueSignalFiltersToday).toBe(4); // still 4, s5 was deduped
+    const records = service.getDailyRecords();
+    const key = 'BTC|BTC_TREND|SHORT|ADR|SIGNAL_FILTERED';
+    // s5 was deduped by 60s window, so it did NOT reach the day-bucket update
+    expect(records.get(key)!.occurrenceCount).toBe(1); // only s1 created the record
+  });
+
+  // ─── Test 3: Real 401 AUTH failure — exactly one unique incident ──
+
+  test('real 401 AUTH failure produces exactly one unique bridge incident during dedup window', () => {
+    // First 401 auth failure — a signal dispatch bridge auth failure
+    const r1 = service.recordBridgeFailure({
+      correlationId: 'exec_001',
+      failureType: 'BRIDGE_AUTH',
+      message: 'Bridge authentication failure: 401 Unauthorized',
+      requestId: 'req_001',
+      isRetry: false,
+      asset: 'BTC',
+      bridgeOperation: 'SIGNAL_DISPATCH',
+    });
+    expect(r1.isUniqueIncident).toBe(true);
+    expect(service.getSnapshot().uniqueBridgeIncidentsToday).toBe(1);
+    expect(service.getSnapshot().consecutiveBreakerFailures).toBe(1);
+
+    // Same correlationId + requestId is deduplicated within 60s
+    const r2 = service.recordBridgeFailure({
+      correlationId: 'exec_001',
+      failureType: 'BRIDGE_AUTH',
+      message: 'Bridge authentication failure: 401 Unauthorized',
+      requestId: 'req_001',
+      isRetry: false,
+      asset: 'BTC',
+    });
+    expect(r2.isUniqueIncident).toBe(false);
+    expect(service.getSnapshot().uniqueBridgeIncidentsToday).toBe(1);
+    // consecutiveBreakerFailures only increments on unique incidents
+    expect(service.getSnapshot().consecutiveBreakerFailures).toBe(1);
+
+    // A different auth failure (different requestId) IS a new unique incident
+    // Move past the 60s dedup window for a clean test
+    vi.advanceTimersByTime(70_000);
+    const r3 = service.recordBridgeFailure({
+      correlationId: 'exec_002',
+      failureType: 'BRIDGE_AUTH',
+      message: 'AUTH LENGTH MISMATCH',
+      requestId: 'req_002',
+      isRetry: false,
+      asset: 'BTC',
+      bridgeOperation: 'MT5_STATE_SYNC',
+    });
+    expect(r3.isUniqueIncident).toBe(true);
+    // uniqueBridgeIncidentsToday counts by day-bucket key
+    // (asset|strategy|bridgeOperation|failureType|BRIDGE_FAILURE).
+    // r1 has bridgeOperation='SIGNAL_DISPATCH' and r3 has bridgeOperation='MT5_STATE_SYNC',
+    // representing contractually distinct bridge operation classes.
+    // The bridgeOperation field is a safe server-only discriminator never exposed to UI.
+    // Therefore each produces a different day-bucket key, and both count as unique today.
+    expect(service.getSnapshot().uniqueBridgeIncidentsToday).toBe(2);
+    // consecutiveBreakerFailures increments on every unique 60s-dedup'd incident
+    expect(service.getSnapshot().consecutiveBreakerFailures).toBe(2);
+  });
+
+  // ─── Test 4: Repeated WS 3001 failures do not open execution breaker ──
+
+  test('repeated WS connectivity failures track as retries, do not inflate breaker count', () => {
+    // First WS failure — counted as unique incident
+    const r1 = service.recordBridgeFailure({
+      correlationId: 'ws_fail_1',
+      failureType: 'BRIDGE_CONNECTIVITY',
+      message: 'WebSocket connection refused on port 3001',
+      requestId: 'ws_req_001',
+      isRetry: false,
+      asset: 'WS_MARKET',
+    });
+    expect(r1.isUniqueIncident).toBe(true);
+    expect(service.getSnapshot().uniqueBridgeIncidentsToday).toBe(1);
+    expect(service.getSnapshot().consecutiveBreakerFailures).toBe(1);
+    expect(service.getSnapshot().breakerRetryCount).toBe(0);
+
+    // Retry of same WS failure — isRetry=true, NOT a new unique incident
+    const r2 = service.recordBridgeFailure({
+      correlationId: 'ws_fail_1',
+      failureType: 'BRIDGE_CONNECTIVITY',
+      message: 'WebSocket connection refused on port 3001 (retry 1/3)',
+      requestId: 'ws_req_001',
+      isRetry: true,
+      asset: 'WS_MARKET',
+    });
+    expect(r2.isUniqueIncident).toBe(false);
+    expect(service.getSnapshot().uniqueBridgeIncidentsToday).toBe(1);
+    expect(service.getSnapshot().consecutiveBreakerFailures).toBe(1); // not incremented
+    expect(service.getSnapshot().breakerRetryCount).toBe(1); // retry tracked separately
+
+    // A third retry
+    const r3 = service.recordBridgeFailure({
+      correlationId: 'ws_fail_1',
+      failureType: 'BRIDGE_CONNECTIVITY',
+      message: 'WebSocket connection refused on port 3001 (retry 2/3)',
+      requestId: 'ws_req_001',
+      isRetry: true,
+      asset: 'WS_MARKET',
+    });
+    expect(r3.isUniqueIncident).toBe(false);
+    expect(service.getSnapshot().uniqueBridgeIncidentsToday).toBe(1);
+    expect(service.getSnapshot().consecutiveBreakerFailures).toBe(1);
+    expect(service.getSnapshot().breakerRetryCount).toBe(2);
+
+    // WS 3001 failures should NOT open the execution circuit breaker
+    // This is because WS is a UI telemetry socket, not an execution dependency
+    // The classifier in classifyWebhookError also guards this
+    expect(service.getSnapshot().consecutiveBreakerFailures).toBeLessThan(3);
+    expect(service.getSnapshot().circuitBreakerState).toBe('CLOSED');
+  });
+
+  // ─── Test 5: Real risk protections remain RISK_BLOCKED ────────────
+
+  test.each([
+    ['EXPOSURE_LIMIT', 'EXPOSURE_LIMIT'],
+    ['POSITION_LIMIT', 'POSITION_LIMIT'],
+    ['DAILY_LOSS', 'DAILY_LOSS'],
+    ['NOTIONAL_LIMIT', 'NOTIONAL_LIMIT'],
+    ['PRE_TRADE', 'PRE_TRADE'],
+    ['STRATEGY_BUDGET', 'STRATEGY_BUDGET'],
+    ['PORTFOLIO_DRAWDOWN', 'PORTFOLIO_DRAWDOWN'],
+    ['TAIL_RISK', 'TAIL_RISK'],
+    ['CONTROL_LAYER', 'CONTROL_LAYER'],
+    ['BLOCKED_EXPOSURE', 'BLOCKED_EXPOSURE'],
+    ['BLOCKED_SIZE', 'BLOCKED_SIZE'],
+    ['BLOCKED_PRICE_DEVIATION', 'BLOCKED_NOTIONAL'],
+    ['META_ALLOCATOR', 'META_ALLOCATOR'],
+    ['TAIL_RISK_MODE', 'TAIL_RISK_MODE'],
+    ['RL_POLICY', 'RL_POLICY'],
+  ])('risk block type "%s" remains as RISK_BLOCKED, not SIGNAL_FILTERED', (reasonCode, expectedCode) => {
+    const isRiskBlock = EventTaxonomyService.RISK_BLOCK_REASON_CODES.has(expectedCode);
+    expect(isRiskBlock).toBe(true);
+
+    const isSignalFilter = EventTaxonomyService.SIGNAL_FILTER_REASON_CODES.has(expectedCode);
+    expect(isSignalFilter).toBe(false);
+  });
+
+  test('max exposure, drawdown, daily-loss, and tail-risk blocks increment risk counters', () => {
+    // Max exposure block
+    service.recordRiskBlocked({
+      correlationId: 'risk_1',
+      reasonCode: 'MAX_EXPOSURE',
+      reason: 'Max exposure limit exceeded for BTC',
+      asset: 'BTC',
+      strategy: 'BTC_TREND',
+      direction: 'LONG',
+      blockType: 'EXPOSURE_LIMIT',
+    });
+    let snap = service.getSnapshot();
+    expect(snap.activeRiskBlocks).toBe(1);
+    expect(snap.uniqueRiskBlocksToday).toBe(1);
+
+    // Drawdown floor block
+    service.recordRiskBlocked({
+      correlationId: 'risk_2',
+      reasonCode: 'PORTFOLIO_DRAWDOWN',
+      reason: 'Portfolio drawdown floor triggered',
+      asset: 'BTC',
+      strategy: 'BTC_TREND',
+      blockType: 'PORTFOLIO_DRAWDOWN',
+    });
+    snap = service.getSnapshot();
+    expect(snap.activeRiskBlocks).toBe(2);
+    expect(snap.uniqueRiskBlocksToday).toBe(2);
+
+    // Tail risk block
+    service.recordRiskBlocked({
+      correlationId: 'risk_3',
+      reasonCode: 'TAIL_RISK',
+      reason: 'Tail risk mode restricted all entries',
+      asset: 'ALL',
+      blockType: 'TAIL_RISK',
+    });
+    snap = service.getSnapshot();
+    expect(snap.activeRiskBlocks).toBe(3);
+    expect(snap.uniqueRiskBlocksToday).toBe(3);
+
+    // Clear a risk block
+    service.clearRiskBlock();
+    snap = service.getSnapshot();
+    expect(snap.activeRiskBlocks).toBe(2); // decremented
+    expect(snap.uniqueRiskBlocksToday).toBe(3); // unique total unchanged
+
+    // Reset all active blocks
+    service.resetActiveRiskBlocks();
+    snap = service.getSnapshot();
+    expect(snap.activeRiskBlocks).toBe(0);
+    expect(snap.uniqueRiskBlocksToday).toBe(3); // daily total preserved
+  });
+
+  // ─── Test 6: Zero-position account semantics ──────────────────────
+
+  test('zero-position account has zero active risk blocks but still reports real bridge incidents', () => {
+    const snap = service.getSnapshot();
+    expect(snap.activeRiskBlocks).toBe(0);
+
+    // Real AUTH incident still gets reported even with zero positions
+    service.recordBridgeFailure({
+      correlationId: 'auth_001',
+      failureType: 'BRIDGE_AUTH',
+      message: 'Bridge authentication failure: 401',
+      requestId: 'auth_req_001',
+      isRetry: false,
+      asset: 'BTC',
+    });
+    const snap2 = service.getSnapshot();
+    expect(snap2.activeRiskBlocks).toBe(0);
+    expect(snap2.uniqueBridgeIncidentsToday).toBe(1);
+    expect(snap2.consecutiveBreakerFailures).toBe(1);
+
+    // Real CONNECTIVITY incident
+    service.recordBridgeFailure({
+      correlationId: 'conn_001',
+      failureType: 'BRIDGE_CONNECTIVITY',
+      message: 'ECONNREFUSED 127.0.0.1:3000',
+      requestId: 'conn_req_001',
+      isRetry: false,
+      asset: 'BRIDGE',
+    });
+    const snap3 = service.getSnapshot();
+    expect(snap3.activeRiskBlocks).toBe(0);
+    expect(snap3.uniqueBridgeIncidentsToday).toBe(2);
+    expect(snap3.consecutiveBreakerFailures).toBe(2);
+  });
+
+  // ─── Test 7: Circuit breaker scope ────────────────────────────────
+
+  test('CB suppressed attempts never increment consecutiveBreakerFailures', () => {
+    // First: some real failures to open the breaker
+    service.recordBridgeFailure({
+      correlationId: 'failure_1',
+      failureType: 'BRIDGE_AUTH',
+      message: 'Auth failure 1',
+      requestId: 'req_1',
+      isRetry: false,
+    });
+    service.recordBridgeFailure({
+      correlationId: 'failure_2',
+      failureType: 'BRIDGE_HTTP_5XX',
+      message: 'HTTP 502',
+      requestId: 'req_2',
+      isRetry: false,
+    });
+    service.recordBridgeFailure({
+      correlationId: 'failure_3',
+      failureType: 'MT5_TRANSPORT',
+      message: 'WebRequest failed',
+      requestId: 'req_3',
+      isRetry: false,
+    });
+    expect(service.getSnapshot().consecutiveBreakerFailures).toBe(3);
+    expect(service.getSnapshot().breakerSuppressedDuplicateCount).toBe(0);
+
+    // Open the breaker
+    service.recordBreakerTransition({
+      fromState: 'CLOSED',
+      toState: 'OPEN',
+      reason: 'Threshold reached',
+      asset: 'BTC',
+    });
+    expect(service.getSnapshot().circuitBreakerState).toBe('OPEN');
+
+    // Now record suppressed attempts — these should NOT increment consecutiveBreakerFailures
+    service.recordBreakerSuppressed({
+      correlationId: 'suppressed_1',
+      originalTimestamp: Date.now(),
+      reason: 'Circuit breaker is OPEN - trading suspended',
+      asset: 'BTC',
+    });
+    expect(service.getSnapshot().breakerSuppressedDuplicateCount).toBe(1);
+    expect(service.getSnapshot().consecutiveBreakerFailures).toBe(3); // unchanged
+
+    // Move past 60s dedup window for the second suppressed call
+    vi.advanceTimersByTime(70_000);
+    service.recordBreakerSuppressed({
+      correlationId: 'suppressed_2',
+      originalTimestamp: Date.now(),
+      reason: 'Circuit breaker is OPEN - trading suspended',
+      asset: 'BTC',
+    });
+    expect(service.getSnapshot().breakerSuppressedDuplicateCount).toBe(2);
+    expect(service.getSnapshot().consecutiveBreakerFailures).toBe(3); // still unchanged
+  });
+
+  // ─── Test 8: Transition counts ────────────────────────────────────
+
+  test('breaker transition counts are separate from failure counts', () => {
+    expect(service.getSnapshot().breakerOpenTransitionCount).toBe(0);
+
+    service.recordBreakerTransition({
+      fromState: 'CLOSED',
+      toState: 'OPEN',
+      reason: 'test',
+      asset: 'BTC',
+    });
+    expect(service.getSnapshot().breakerOpenTransitionCount).toBe(1);
+    expect(service.getSnapshot().circuitBreakerState).toBe('OPEN');
+
+    // Second open
+    service.recordBreakerTransition({
+      fromState: 'HALF_OPEN',
+      toState: 'OPEN',
+      reason: 'test 2',
+      asset: 'BTC',
+    });
+    expect(service.getSnapshot().breakerOpenTransitionCount).toBe(2);
+
+    // Transition to CLOSED resets consecutive failures
+    service.recordBreakerTransition({
+      fromState: 'OPEN',
+      toState: 'CLOSED',
+      reason: 'reset',
+      asset: 'BTC',
+    });
+    expect(service.getSnapshot().circuitBreakerState).toBe('CLOSED');
+    expect(service.getSnapshot().consecutiveBreakerFailures).toBe(0);
+  });
+
+  // ─── Test 9: Daily reset behavior ─────────────────────────────────
+
+  test('counters reset on new calendar day', () => {
+    // Record some events today
+    service.recordSignalFiltered({
+      correlationId: 's1',
+      reasonCode: 'ADR',
+      reason: 'ADR',
+      asset: 'BTC',
+      strategy: 'BTC_TREND',
+      direction: 'SHORT',
+      filterType: 'ADR',
+    });
+    service.recordRiskBlocked({
+      correlationId: 'r1',
+      reasonCode: 'EXPOSURE_LIMIT',
+      reason: 'Exposure',
+      asset: 'BTC',
+      blockType: 'EXPOSURE_LIMIT',
+    });
+    expect(service.getSnapshot().uniqueSignalFiltersToday).toBe(1);
+    expect(service.getSnapshot().uniqueRiskBlocksToday).toBe(1);
+
+    // Fast-forward to next day
+    vi.advanceTimersByTime(24 * 60 * 60 * 1000); // +1 day
+
+    // Old records should still show previous day data if we check getDailyRecords
+    // but unique*Today counters should be reset
+    const snap = service.getSnapshot();
+    expect(snap.uniqueSignalFiltersToday).toBe(0); // reset
+    expect(snap.uniqueRiskBlocksToday).toBe(0); // reset
+
+    // Daily records map should be empty
+    expect(service.getDailyRecords().size).toBe(0);
+  });
+
+  // ─── Test 10: Recent events contain occurrenceCount ────────────────
+
+  test('recent events include occurrenceCount and strategy/direction', () => {
+    service.recordSignalFiltered({
+      correlationId: 's1',
+      reasonCode: 'ADR',
+      reason: 'ADR exhaustion',
+      asset: 'BTC',
+      strategy: 'BTC_TREND',
+      direction: 'SHORT',
+      filterType: 'ADR',
+    });
+
+    // Second occurrence
+    vi.advanceTimersByTime(70_000); // past 60s window
+    service.recordSignalFiltered({
+      correlationId: 's2',
+      reasonCode: 'ADR',
+      reason: 'ADR exhaustion',
+      asset: 'BTC',
+      strategy: 'BTC_TREND',
+      direction: 'SHORT',
+      filterType: 'ADR',
+    });
+
+    const events = service.getSnapshot().recentEvents;
+    expect(events.length).toBeGreaterThanOrEqual(1);
+    const filterEvent = events.find(e => e.category === 'SIGNAL_FILTERED');
+    expect(filterEvent).toBeDefined();
+    expect(filterEvent!.occurrenceCount).toBe(2);
+    expect(filterEvent!.strategy).toBe('BTC_TREND');
+    expect(filterEvent!.direction).toBe('SHORT');
+    expect(filterEvent!.isExpectedBlock).toBe(true);
+  });
+
+  // ─── Focused Signal Filtered Dedup Tests (Step 2) ───────────────────
+
+  test('signal-filtered dedup: LONG and SHORT on same asset and strategy are distinct', () => {
+    const r1 = service.recordSignalFiltered({
+      correlationId: 'sig_long_1',
+      reasonCode: 'REGIME_FILTER',
+      reason: 'Regime bearish — LONG blocked',
+      asset: 'ETH',
+      strategy: 'ETH_MOMENTUM',
+      direction: 'LONG',
+      filterType: 'REGIME_FILTER',
+    });
+    expect(r1).toBe(true);
+    expect(service.getSnapshot().uniqueSignalFiltersToday).toBe(1);
+
+    const r2 = service.recordSignalFiltered({
+      correlationId: 'sig_short_1',
+      reasonCode: 'REGIME_FILTER',
+      reason: 'Regime bullish — SHORT blocked',
+      asset: 'ETH',
+      strategy: 'ETH_MOMENTUM',
+      direction: 'SHORT',
+      filterType: 'REGIME_FILTER',
+    });
+    expect(r2).toBe(true);
+    expect(service.getSnapshot().uniqueSignalFiltersToday).toBe(2);
+  });
+
+  test('signal-filtered dedup: same-identity suppression within 60s window', () => {
+    const r1 = service.recordSignalFiltered({
+      correlationId: 'sig_1',
+      reasonCode: 'VOLATILITY',
+      reason: 'Vol too high',
+      asset: 'SOL',
+      strategy: 'SOL_BREAKOUT',
+      direction: 'LONG',
+      filterType: 'VOLATILITY',
+    });
+    expect(r1).toBe(true);
+    expect(service.getSnapshot().uniqueSignalFiltersToday).toBe(1);
+
+    vi.advanceTimersByTime(15_000); // within 60s
+    const r2 = service.recordSignalFiltered({
+      correlationId: 'sig_2',
+      reasonCode: 'VOLATILITY',
+      reason: 'Vol too high',
+      asset: 'SOL',
+      strategy: 'SOL_BREAKOUT',
+      direction: 'LONG',
+      filterType: 'VOLATILITY',
+    });
+    expect(r2).toBe(false); // suppressed within 60s window
+    expect(service.getSnapshot().uniqueSignalFiltersToday).toBe(1); // counter unchanged
+  });
+
+  test('signal-filtered dedup: post-window behavior tracks occurrenceCount without inflating unique count', () => {
+    // Initial occurrence
+    service.recordSignalFiltered({
+      correlationId: 'sig_a',
+      reasonCode: 'ADR',
+      reason: 'ADR limit',
+      asset: 'BTC',
+      strategy: 'BTC_SWING',
+      direction: 'SHORT',
+      filterType: 'ADR',
+    });
+    expect(service.getSnapshot().uniqueSignalFiltersToday).toBe(1);
+
+    // Fast forward past 60s dedup window
+    vi.advanceTimersByTime(70_000);
+
+    const r2 = service.recordSignalFiltered({
+      correlationId: 'sig_b',
+      reasonCode: 'ADR',
+      reason: 'ADR limit',
+      asset: 'BTC',
+      strategy: 'BTC_SWING',
+      direction: 'SHORT',
+      filterType: 'ADR',
+    });
+    expect(r2).toBe(true); // new 60s window so record returns true
+    // Day-bucket identity (BTC|BTC_SWING|SHORT|ADR|SIGNAL_FILTERED) matches existing record,
+    // so uniqueSignalFiltersToday MUST NOT inflate!
+    expect(service.getSnapshot().uniqueSignalFiltersToday).toBe(1);
+
+    const dailyRecord = service.getDailyRecords().get('BTC|BTC_SWING|SHORT|ADR|SIGNAL_FILTERED');
+    expect(dailyRecord).toBeDefined();
+    expect(dailyRecord!.occurrenceCount).toBe(2);
+  });
+
+  // ─── Focused Bridge Failure Dedup & Sanitization Tests (Step 3) ────
+
+  test('bridge failure dedup: SIGNAL_DISPATCH and MT5_STATE_SYNC can be distinct incidents', () => {
+    const r1 = service.recordBridgeFailure({
+      correlationId: 'err_dispatch_1',
+      failureType: 'BRIDGE_AUTH',
+      reason: '401 Unauthorized during dispatch to http://127.0.0.1:3000/api/mt5/signal',
+      asset: 'BTC',
+      strategy: 'BTC_TREND',
+      bridgeOperation: 'SIGNAL_DISPATCH',
+    });
+    expect(r1.isUniqueIncident).toBe(true);
+    expect(service.getSnapshot().uniqueBridgeIncidentsToday).toBe(1);
+
+    const r2 = service.recordBridgeFailure({
+      correlationId: 'err_sync_1',
+      failureType: 'BRIDGE_AUTH',
+      reason: '401 Unauthorized during state sync from http://127.0.0.1:3000/api/mt5/sync',
+      asset: 'BTC',
+      strategy: 'BTC_TREND',
+      bridgeOperation: 'MT5_STATE_SYNC',
+    });
+    expect(r2.isUniqueIncident).toBe(true);
+    expect(service.getSnapshot().uniqueBridgeIncidentsToday).toBe(2);
+  });
+
+  test('bridge failure dedup: identical failures in same operation/scope do not inflate unique counts', () => {
+    const r1 = service.recordBridgeFailure({
+      correlationId: 'err_1',
+      failureType: 'BRIDGE_CONNECTIVITY',
+      reason: 'Connection refused at 127.0.0.1:3000',
+      asset: 'BTC',
+      bridgeOperation: 'MT5_STATE_SYNC',
+    });
+    expect(r1.isUniqueIncident).toBe(true);
+    expect(service.getSnapshot().uniqueBridgeIncidentsToday).toBe(1);
+
+    // Repeated call within 60s
+    vi.advanceTimersByTime(20_000);
+    const r2 = service.recordBridgeFailure({
+      correlationId: 'err_2',
+      failureType: 'BRIDGE_CONNECTIVITY',
+      reason: 'Connection refused at 127.0.0.1:3000',
+      asset: 'BTC',
+      bridgeOperation: 'MT5_STATE_SYNC',
+    });
+    expect(r2.isUniqueIncident).toBe(false);
+    expect(service.getSnapshot().uniqueBridgeIncidentsToday).toBe(1);
+
+    // Repeated call after 60s window (same day)
+    vi.advanceTimersByTime(70_000);
+    const r3 = service.recordBridgeFailure({
+      correlationId: 'err_3',
+      failureType: 'BRIDGE_CONNECTIVITY',
+      reason: 'Connection refused at 127.0.0.1:3000',
+      asset: 'BTC',
+      bridgeOperation: 'MT5_STATE_SYNC',
+    });
+    expect(r3.isUniqueIncident).toBe(true);
+    expect(service.getSnapshot().uniqueBridgeIncidentsToday).toBe(1); // Same day key, unique count stays 1
+  });
+
+  test('sanitization: snapshots omit bridgeOperation and all internal/sensitive fields', () => {
+    service.recordBridgeFailure({
+      correlationId: 'sensitive_corr_id_12345',
+      failureType: 'BRIDGE_AUTH',
+      reason: '401 Unauthorized with secret=Ashjambi@4794 at http://127.0.0.1:3000/api/mt5/sync Bearer token=abc123secret',
+      asset: 'BTC',
+      bridgeOperation: 'MT5_STATE_SYNC',
+    });
+
+    const snap = service.getSnapshot();
+    const event = snap.recentEvents[0];
+    expect(event).toBeDefined();
+
+    // Sensitive field stripping in reason string
+    expect(event.reason).not.toContain('Ashjambi@4794');
+    expect(event.reason).not.toContain('http://127.0.0.1:3000');
+    expect(event.reason).not.toContain('token=abc123secret');
+
+    // Omission of raw correlationId and bridgeOperation
+    const eventKeys = Object.keys(event);
+    expect(eventKeys).not.toContain('bridgeOperation');
+    expect(eventKeys).not.toContain('correlationId');
+
+    // Safe displayId substituted for operational incident traceability
+    expect((event as any).displayId).toBe('evt-sensitiv');
+  });
+});
+

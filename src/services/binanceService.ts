@@ -1,5 +1,4 @@
 const BINANCE_API_URL = '/api/proxy/exchange-data/bn';
-const BINANCE_DIRECT_URL = 'https://api.binance.com/api/v3';
 
 export const fetchBinanceSummary = async (symbol: string) => {
   try {
@@ -24,24 +23,10 @@ export const fetchBinanceSummary = async (symbol: string) => {
         }
       }
     } catch (proxyError) {
-      console.warn(`[Binance Proxy] Failed to fetch summary for ${symbol}, trying direct fallback...`, proxyError);
+      console.warn(`[Binance Proxy] Failed to fetch summary for ${symbol}`, proxyError);
     }
-
-    // 2. Direct fallback (CORS-enabled)
-    const directRes = await fetch(`${BINANCE_DIRECT_URL}/ticker/24hr?symbol=${symbol}`);
-    const rawDirectText = await directRes.clone().text();
-    console.log(`[Binance Direct] Raw summary for ${symbol}:`, rawDirectText);
-    if (!directRes.ok) throw new Error(`Binance direct fetch returned status ${directRes.status}`);
-    const data: any = await directRes.json();
-    return {
-      instrument_name: symbol, // Return the original symbol
-      last: parseFloat(data.lastPrice) || 0,
-      high: parseFloat(data.highPrice) || 0,
-      low: parseFloat(data.lowPrice) || 0,
-      volume: parseFloat(data.volume) || 0,
-      price_change: parseFloat(data.priceChangePercent) || 0,
-      open_interest: 0,
-    };
+    // Direct browser calls to Binance are blocked by CORS/geo-restrictions (451) — proxy is the only path.
+    throw new Error(`Binance proxy summary fetch failed for ${symbol}`);
   } catch (error) {
     console.error(`Error fetching Binance summary for ${symbol}:`, error);
     throw error;
@@ -61,17 +46,10 @@ export const fetchBinanceCandles = async (symbol: string, interval: string = '15
         return parseBinanceCandles(data);
       }
     } catch (proxyError) {
-      console.warn(`[Binance Proxy] Failed to fetch candles for ${symbol}, trying direct fallback...`, proxyError);
+      console.warn(`[Binance Proxy] Failed to fetch candles for ${symbol}`, proxyError);
     }
-
-    // 2. Direct fallback
-    const directUrl = `${BINANCE_DIRECT_URL}/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
-    const directRes = await fetch(directUrl);
-    const rawDirectText = await directRes.clone().text();
-    console.log(`[Binance Direct] Raw candles for ${symbol}:`, rawDirectText);
-    if (!directRes.ok) throw new Error(`Binance direct fetch returned status ${directRes.status}`);
-    const data = await directRes.json();
-    return parseBinanceCandles(data);
+    // Direct browser calls to Binance are blocked by CORS/geo-restrictions (451) — proxy is the only path.
+    throw new Error(`Binance proxy candles fetch failed for ${symbol}`);
   } catch (error) {
     console.error(`Error fetching Binance candles for ${symbol}:`, error);
     throw error;
@@ -124,17 +102,10 @@ export const fetchBinanceOrderBook = async (symbol: string, limit: number = 50) 
         return parseOrderBook(data);
       }
     } catch (proxyError) {
-      console.warn(`[Binance Proxy] Failed to fetch order book for ${symbol}, trying direct fallback...`, proxyError);
+      console.warn(`[Binance Proxy] Failed to fetch order book for ${symbol}`, proxyError);
     }
-
-    // 2. Direct fallback
-    const directUrl = `${BINANCE_DIRECT_URL}/depth?symbol=${symbol}&limit=${limit}`;
-    const directRes = await fetch(directUrl);
-    const rawDirectText = await directRes.clone().text();
-    console.log(`[Binance Direct] Raw depth for ${symbol}:`, rawDirectText);
-    if (!directRes.ok) throw new Error(`Binance direct fetch returned status ${directRes.status}`);
-    const data = await directRes.json();
-    return parseOrderBook(data);
+    // Direct browser calls to Binance are blocked by CORS/geo-restrictions (451) — proxy is the only path.
+    throw new Error(`Binance proxy order book fetch failed for ${symbol}`);
   } catch (error) {
     console.error(`Error fetching Binance order book for ${symbol}:`, error);
     throw error;

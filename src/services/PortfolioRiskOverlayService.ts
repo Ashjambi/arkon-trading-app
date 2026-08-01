@@ -1,4 +1,4 @@
-import { TradingSignal } from '../types';
+import { TradingSignal, SignalDirection } from '../types';
 import { strategyRegistryService } from './StrategyRegistryService';
 import { diagnosticsService } from './DiagnosticsService';
 
@@ -8,6 +8,10 @@ export interface OverlayDecision {
     suppressed: boolean;
     suppressionReason?: string;
     overlayNotes?: string[];
+    crowdingRisk?: 'LOW' | 'MEDIUM' | 'HIGH';
+    concentrationRisk?: 'LOW' | 'MEDIUM' | 'HIGH';
+    regimeConflict?: boolean;
+    executionRisk?: 'LOW' | 'MEDIUM' | 'HIGH';
 }
 
 export class PortfolioRiskOverlayService {
@@ -60,11 +64,19 @@ export class PortfolioRiskOverlayService {
             let acceptedForAsset = 0;
 
             for (const { signal, meta, weight } of enriched) {
+                const crowdingRisk = acceptedForAsset >= this.config.maxConcurrentStrategiesPerAsset - 1 ? 'HIGH' : 'MEDIUM';
+                const concentrationRisk = signal.direction === SignalDirection.LONG && longs >= this.config.maxDirectionalBiasPerAsset ? 'HIGH' : 'MEDIUM';
+                const regimeConflict = activeThemes.has(meta.thematicGroup) || (signal.direction === SignalDirection.LONG && longs > 0 && (signal.direction as SignalDirection) === SignalDirection.SHORT);
+                const executionRisk = (signal.qualityScore || 50) < 60 ? 'HIGH' : 'MEDIUM';
                 const decision: OverlayDecision = {
                     originalSignal: signal,
                     adjustedSizeFactor: weight,
                     suppressed: false,
-                    overlayNotes: []
+                    overlayNotes: [],
+                    crowdingRisk,
+                    concentrationRisk: concentrationRisk as any,
+                    regimeConflict,
+                    executionRisk: executionRisk as any
                 };
 
                 if (acceptedForAsset >= this.config.maxConcurrentStrategiesPerAsset) {
@@ -92,6 +104,18 @@ export class PortfolioRiskOverlayService {
                     if (signal.direction === 'LONG') longs++;
                     else if (signal.direction === 'SHORT') shorts++;
                 }
+
+                if (decision.suppressed) {
+                    decision.crowdingRisk = 'HIGH';
+                    decision.concentrationRisk = 'HIGH';
+                    decision.executionRisk = 'HIGH';
+                    decision.regimeConflict = true;
+                }
+
+                (decision.originalSignal as any).crowdingRisk = decision.crowdingRisk;
+                (decision.originalSignal as any).concentrationRisk = decision.concentrationRisk;
+                (decision.originalSignal as any).regimeConflict = decision.regimeConflict;
+                (decision.originalSignal as any).executionRisk = decision.executionRisk;
 
                 diagnosticsService.recordOverlayDecision(
                     signal.strategy,

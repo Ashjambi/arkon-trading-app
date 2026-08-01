@@ -1,0 +1,28 @@
+﻿C:\Users\Administrator\OneDrive\arkon-trading-app\src\services\ExecutionOrchestrator.ts:444:            tradingControlService.recordDegradedData(signal.asset);
+C:\Users\Administrator\OneDrive\arkon-trading-app\src\services\ExecutionOrchestrator.ts:545:                tradingControlService.recordExecutionSkip(signal.asset);
+C:\Users\Administrator\OneDrive\arkon-trading-app\src\services\ExecutionOrchestrator.ts:559:                tradingControlService.recordExecutionDelay(signal.asset);
+C:\Users\Administrator\OneDrive\arkon-trading-app\src\services\ExecutionOrchestrator.ts:562:                tradingControlService.recordNormalExecution(signal.asset);
+C:\Users\Administrator\OneDrive\arkon-trading-app\src\services\ExecutionOrchestrator.ts:565:            tradingControlService.recordNormalExecution(signal.asset);
+C:\Users\Administrator\OneDrive\arkon-trading-app\src\services\tradingAlgo.ts:89:      tradingControlService.recordDegradedData(summary.instrument_name || asset);
+C:\Users\Administrator\OneDrive\arkon-trading-app\src\services\TradingControlService.test.ts:30:        tradingControlService.recordExecutionSkip();
+C:\Users\Administrator\OneDrive\arkon-trading-app\src\services\TradingControlService.test.ts:31:        tradingControlService.recordExecutionSkip();
+C:\Users\Administrator\OneDrive\arkon-trading-app\src\services\TradingControlService.test.ts:32:        tradingControlService.recordExecutionSkip(); // 3rd skip
+C:\Users\Administrator\OneDrive\arkon-trading-app\src\services\TradingControlService.test.ts:45:            tradingControlService.recordExecutionDelay();
+C:\Users\Administrator\OneDrive\arkon-trading-app\src\services\TradingControlService.test.ts:60:        tradingControlService.recordExecutionSkip();
+C:\Users\Administrator\OneDrive\arkon-trading-app\src\services\TradingControlService.test.ts:61:        tradingControlService.recordExecutionSkip();
+C:\Users\Administrator\OneDrive\arkon-trading-app\src\services\TradingControlService.test.ts:62:        tradingControlService.recordExecutionSkip();
+C:\Users\Administrator\OneDrive\arkon-trading-app\src\services\TradingControlService.test.ts:88:        tradingControlService.recordDegradedData('BTC');
+C:\Users\Administrator\OneDrive\arkon-trading-app\src\services\TradingControlService.test.ts:89:        tradingControlService.recordDegradedData('BTC');
+C:\Users\Administrator\OneDrive\arkon-trading-app\src\services\TradingControlService.test.ts:90:        tradingControlService.recordDegradedData('BTC');
+C:\Users\Administrator\OneDrive\arkon-trading-app\src\services\TradingControlService.test.ts:112:        tradingControlService.recordDegradedData('BTC');
+C:\Users\Administrator\OneDrive\arkon-trading-app\src\services\TradingControlService.test.ts:113:        tradingControlService.recordDegradedData('BTC');
+C:\Users\Administrator\OneDrive\arkon-trading-app\src\services\TradingControlService.test.ts:116:        tradingControlService.recordExecutionSkip('ETH');
+C:\Users\Administrator\OneDrive\arkon-trading-app\src\services\TradingControlService.test.ts:125:        tradingControlService.recordDegradedData('BTC');
+C:\Users\Administrator\OneDrive\arkon-trading-app\src\services\TradingControlService.test.ts:132:        tradingControlService.recordExecutionSkip('ETH');
+C:\Users\Administrator\OneDrive\arkon-trading-app\src\services\TradingControlService.test.ts:133:        tradingControlService.recordExecutionSkip('ETH');
+C:\Users\Administrator\OneDrive\arkon-trading-app\src\services\TradingControlService.test.ts:141:        tradingControlService.recordDegradedData('BTC');
+C:\Users\Administrator\OneDrive\arkon-trading-app\src\services\TradingControlService.test.ts:142:        tradingControlService.recordDegradedData('ETH');
+C:\Users\Administrator\OneDrive\arkon-trading-app\src\services\TradingControlService.ts:132:  public recordDegradedData(asset?: string): void {
+C:\Users\Administrator\OneDrive\arkon-trading-app\src\services\TradingControlService.ts:142:  public recordExecutionSkip(asset?: string): void {
+C:\Users\Administrator\OneDrive\arkon-trading-app\src\services\TradingControlService.ts:153:  public recordExecutionDelay(asset?: string): void {
+C:\Users\Administrator\OneDrive\arkon-trading-app\src\services\TradingControlService.ts:163:  public recordNormalExecution(asset?: string): void {

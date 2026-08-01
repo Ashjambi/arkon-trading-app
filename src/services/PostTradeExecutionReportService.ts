@@ -38,6 +38,17 @@ export interface PostTradeExecutionParentReport {
     totalNotionalExecuted: number | null;
     executionQualityStatus: string;
     executionQualityAlerts: any[];
+    pnlByStrategyRegime?: any[];
+    shortfallByStrategyRegimeExecutionStyle?: any[];
+    realizedAlphaDecayByRegime?: any[];
+    topRejectionReasons?: any[];
+    executionStyleEffectiveness?: any[];
+    persistentMemorySummary?: any;
+    decayAdjustedStrategyEdge?: number;
+    blockedAlphaSaved?: number;
+    blockedAlphaLost?: number;
+    calibrationDrift?: number;
+    executionStylePolicyEffectiveness?: any[];
     children: PostTradeExecutionChildReport[];
 }
 
@@ -85,6 +96,8 @@ export class PostTradeExecutionReportServiceImpl {
             };
         });
 
+        const attribution = traceDecision.attribution || {};
+
         return {
             reportVersion: '1.0',
             generatedAt: new Date().toISOString(),
@@ -107,6 +120,17 @@ export class PostTradeExecutionReportServiceImpl {
             totalNotionalExecuted: parentTcaSummary.totalNotionalExecuted ?? null,
             executionQualityStatus: status,
             executionQualityAlerts: alerts,
+            pnlByStrategyRegime: attribution.pnlByStrategyRegime,
+            shortfallByStrategyRegimeExecutionStyle: attribution.shortfallByStrategyRegimeExecutionStyle,
+            realizedAlphaDecayByRegime: attribution.realizedAlphaDecayByRegime,
+            topRejectionReasons: attribution.topRejectionReasons,
+            executionStyleEffectiveness: attribution.executionStyleEffectiveness,
+            persistentMemorySummary: attribution.persistentMemorySummary,
+            decayAdjustedStrategyEdge: attribution.decayAdjustedStrategyEdge,
+            blockedAlphaSaved: attribution.blockedAlphaSaved,
+            blockedAlphaLost: attribution.blockedAlphaLost,
+            calibrationDrift: attribution.calibrationDrift,
+            executionStylePolicyEffectiveness: attribution.executionStylePolicyEffectiveness,
             children
         };
     }

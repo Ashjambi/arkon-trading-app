@@ -1,0 +1,974 @@
+
+[1m[46m RUN [49m[22m [36mv4.1.0 [39m[90mC:/Users/15023063/OneDrive/arkon-trading-app[39m
+
+ [31mΓ¥»[39m src/services/EventTaxonomyService.test.ts [2m([22m[2m31 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 158[2mms[22m[39m
+[31m     [31m├ù[31m sanitization: snapshots omit bridgeOperation and all internal/sensitive fields[39m[32m 32[2mms[22m[39m
+[90mstdout[2m | src/services/ParallelWinnerExecution.e2e.test.ts[2m > [22m[2mParallel Winner Execution E2E[2m > [22m[2mScenario 3: Parallel winner blocked by trading control
+[22m[39m[RISK][INFO] MetaStrategy allocation computed: 2 strategies, 0 zero-weighted, 0 boosted, 0 reduced | JSON:{"timestamp":1785586378373,"level":"INFO","category":"RISK","event":"meta_strategy_allocation","total":2,"zeroWeighted":0,"boosted":0,"reduced":0,"weights":[{"asset":"BTC-PERP","strategy":"S1","weight":1,"reason":"Insufficient trades (2 < 10), neutral weight"},{"asset":"BTC-PERP","strategy":"S2","weight":1,"reason":"Insufficient trades (1 < 10), neutral weight"}]}
+
+[90mstdout[2m | src/services/ParallelWinnerExecution.e2e.test.ts[2m > [22m[2mParallel Winner Execution E2E[2m > [22m[2mScenario 3: Parallel winner blocked by trading control
+[22m[39m[EXEC][INFO] [BTC-PERP/S2] Trade recorded: LOSS, PnL=0.00, WR=0.0% | JSON:{"timestamp":1785586378374,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC-PERP","strategy":"S2","outcome":"LOSS","pnl":0,"winRate":0,"totalTrades":2,"consecutiveLosses":2}
+
+[90mstdout[2m | src/services/ParallelWinnerExecution.e2e.test.ts[2m > [22m[2mParallel Winner Execution E2E[2m > [22m[2mScenario 4: Parallel winner blocked by pre-trade
+[22m[39m[RISK][INFO] MetaStrategy allocation computed: 2 strategies, 0 zero-weighted, 0 boosted, 0 reduced | JSON:{"timestamp":1785586378403,"level":"INFO","category":"RISK","event":"meta_strategy_allocation","total":2,"zeroWeighted":0,"boosted":0,"reduced":0,"weights":[{"asset":"BTC-PERP","strategy":"S1","weight":1,"reason":"Insufficient trades (2 < 10), neutral weight"},{"asset":"BTC-PERP","strategy":"S2","weight":1,"reason":"Insufficient trades (2 < 10), neutral weight"}]}
+
+[90mstdout[2m | src/services/ParallelWinnerExecution.e2e.test.ts[2m > [22m[2mParallel Winner Execution E2E[2m > [22m[2mScenario 4: Parallel winner blocked by pre-trade
+[22m[39m[EXEC][INFO] [BTC-PERP/S1] Trade recorded: LOSS, PnL=0.00, WR=0.0% | JSON:{"timestamp":1785586378404,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC-PERP","strategy":"S1","outcome":"LOSS","pnl":0,"winRate":0,"totalTrades":3,"consecutiveLosses":3}
+
+[90mstdout[2m | src/services/ParallelWinnerExecution.e2e.test.ts[2m > [22m[2mParallel Winner Execution E2E[2m > [22m[2mScenario 4: Parallel winner blocked by pre-trade
+[22m[39m[RISK][INFO] MetaStrategy allocation computed: 2 strategies, 0 zero-weighted, 0 boosted, 0 reduced | JSON:{"timestamp":1785586378408,"level":"INFO","category":"RISK","event":"meta_strategy_allocation","total":2,"zeroWeighted":0,"boosted":0,"reduced":0,"weights":[{"asset":"BTC-PERP","strategy":"S1","weight":1,"reason":"Insufficient trades (3 < 10), neutral weight"},{"asset":"BTC-PERP","strategy":"S2","weight":1,"reason":"Insufficient trades (2 < 10), neutral weight"}]}
+
+ [31mΓ¥»[39m src/services/ParallelWinnerExecution.e2e.test.ts [2m([22m[2m8 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 242[2mms[22m[39m
+[31m     [31m├ù[31m Scenario 3: Parallel winner blocked by trading control[39m[32m 33[2mms[22m[39m
+[31m     [31m├ù[31m Scenario 4: Parallel winner blocked by pre-trade[39m[32m 21[2mms[22m[39m
+[90mstdout[2m | src/services/FullPipelineMultiWinner.e2e.test.ts[2m > [22m[2mFullPipelineMultiWinnerE2E[2m > [22m[2mScenario: Tail Risk Mode blocks unallowed strategies
+[22m[39m[QUANT][INFO] [BTC-PERP] generateSignal called. Price: 50000, Regime: UNKNOWN | JSON:{"timestamp":1785586380421,"level":"INFO","category":"QUANT","event":"signal_evaluation_start","asset":"BTC-PERP","regime":"UNKNOWN","price":50000}
+[QUANT][INFO] [BTC-PERP] Ranked Strategies evaluated for current market regime | JSON:{"timestamp":1785586380422,"level":"INFO","category":"QUANT","event":"strategies_ranked","asset":"BTC-PERP","rankedStrategies":[{"strat":"BTC_TREND","reason":"Mock Trend"},{"strat":"BTC_MEAN_REV","reason":"Mock Mean Rev"}]}
+[COMPLIANCE][INFO] [BTC-PERP] [Strategy: BTC_TREND] PASSED Gates. Score: 85 | JSON:{"timestamp":1785586380423,"level":"INFO","category":"COMPLIANCE","event":"gate_validation_passed","asset":"BTC-PERP","strategy":"BTC_TREND","score":85}
+[QUANT][INFO] [BTC-PERP] [Strategy: BTC_TREND] CANDIDATE signal generated (Score: 85, Config Threshold: 70, Hunter: false) | JSON:{"timestamp":1785586380423,"level":"INFO","category":"QUANT","event":"signal_candidate","asset":"BTC-PERP","strategy":"BTC_TREND","score":85,"threshold":70,"hunterMode":false}
+[COMPLIANCE][INFO] [BTC-PERP] [Strategy: BTC_MEAN_REV] PASSED Gates. Score: 85 | JSON:{"timestamp":1785586380423,"level":"INFO","category":"COMPLIANCE","event":"gate_validation_passed","asset":"BTC-PERP","strategy":"BTC_MEAN_REV","score":85}
+[QUANT][INFO] [BTC-PERP] [Strategy: BTC_MEAN_REV] CANDIDATE signal generated (Score: 85, Config Threshold: 70, Hunter: false) | JSON:{"timestamp":1785586380424,"level":"INFO","category":"QUANT","event":"signal_candidate","asset":"BTC-PERP","strategy":"BTC_MEAN_REV","score":85,"threshold":70,"hunterMode":false}
+[QUANT][INFO] [BTC-PERP] [Strategy: BTC_TREND] SELECTED as final coordinated signal (Score: 85) | JSON:{"timestamp":1785586380425,"level":"INFO","category":"QUANT","event":"signal_accepted","asset":"BTC-PERP","strategy":"BTC_TREND","score":85}
+[QUANT][INFO] [BTC-PERP] Final Analysis: qualityScore=75, direction=LONG, signal=true | JSON:{"timestamp":1785586380425,"level":"INFO","category":"QUANT","event":"signal_evaluation_end","asset":"BTC-PERP","score":75,"direction":"LONG","signalGenerated":true}
+[QUANT][INFO] [BTC-PERP] Execution Quality: NORMAL (Neutral microstructure) | JSON:{"timestamp":1785586380426,"level":"INFO","category":"QUANT","event":"execution_quality_evaluated","asset":"BTC-PERP","direction":"LONG","recommendedSize":1,"orderBookImbalance":null,"microPrice":null,"microPriceDeviation":null,"topLevelImbalance":null,"depthPressure":null,"normalizedOfi":null,"toxicityMetric":null,"volatilityProxy":1,"regime":"LOW_VOLATILITY","hunterMode":false,"executionMode":"NORMAL","referencePrice":null,"executionPenaltyFactor":1,"shouldDelay":false,"shouldSkip":false,"reason":"Neutral microstructure","eventVersion":"ExecQ_v1","service":"trading-engine","component":"execution-quality","timestampUtc":"2026-08-01T12:13:00.426Z"}
+[QUANT][INFO] [BTC-PERP] Execution Quality: NORMAL (Neutral microstructure) | JSON:{"timestamp":1785586380426,"level":"INFO","category":"QUANT","event":"execution_quality_evaluated","asset":"BTC-PERP","direction":"LONG","recommendedSize":1,"orderBookImbalance":null,"microPrice":null,"microPriceDeviation":null,"topLevelImbalance":null,"depthPressure":null,"normalizedOfi":null,"toxicityMetric":null,"volatilityProxy":1,"regime":"LOW_VOLATILITY","hunterMode":false,"executionMode":"NORMAL","referencePrice":null,"executionPenaltyFactor":1,"shouldDelay":false,"shouldSkip":false,"reason":"Neutral microstructure","eventVersion":"ExecQ_v1","service":"trading-engine","component":"execution-quality","timestampUtc":"2026-08-01T12:13:00.426Z"}
+[RISK][INFO] MetaStrategy allocation computed: 2 strategies, 0 zero-weighted, 0 boosted, 0 reduced | JSON:{"timestamp":1785586380427,"level":"INFO","category":"RISK","event":"meta_strategy_allocation","total":2,"zeroWeighted":0,"boosted":0,"reduced":0,"weights":[{"asset":"BTC-PERP","strategy":"BTC_TREND","weight":1,"reason":"Insufficient trades (7 < 10), neutral weight"},{"asset":"BTC-PERP","strategy":"BTC_MEAN_REV","weight":1,"reason":"Insufficient trades (8 < 10), neutral weight"}]}
+
+[90mstdout[2m | src/services/FullPipelineMultiWinner.e2e.test.ts[2m > [22m[2mFullPipelineMultiWinnerE2E[2m > [22m[2mScenario: Tail Risk Mode blocks unallowed strategies
+[22m[39m[EXEC][INFO] [BTC-PERP/BTC_TREND] Trade recorded: LOSS, PnL=0.00, WR=0.0% | JSON:{"timestamp":1785586380428,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC-PERP","strategy":"BTC_TREND","outcome":"LOSS","pnl":0,"winRate":0,"totalTrades":8,"consecutiveLosses":8}
+
+[90mstdout[2m | src/services/FullPipelineMultiWinner.e2e.test.ts[2m > [22m[2mFullPipelineMultiWinnerE2E[2m > [22m[2mScenario: Tail Risk Mode blocks unallowed strategies
+[22m[39m[RISK][INFO] MetaStrategy allocation computed: 2 strategies, 0 zero-weighted, 0 boosted, 0 reduced | JSON:{"timestamp":1785586380432,"level":"INFO","category":"RISK","event":"meta_strategy_allocation","total":2,"zeroWeighted":0,"boosted":0,"reduced":0,"weights":[{"asset":"BTC-PERP","strategy":"BTC_TREND","weight":1,"reason":"Insufficient trades (8 < 10), neutral weight"},{"asset":"BTC-PERP","strategy":"BTC_MEAN_REV","weight":1,"reason":"Insufficient trades (8 < 10), neutral weight"}]}
+
+[90mstdout[2m | src/services/FullPipelineMultiWinner.e2e.test.ts[2m > [22m[2mFullPipelineMultiWinnerE2E[2m > [22m[2mScenario: Tail Risk Mode blocks unallowed strategies
+[22m[39m[EXEC][INFO] [BTC-PERP/BTC_MEAN_REV] Trade recorded: LOSS, PnL=0.00, WR=0.0% | JSON:{"timestamp":1785586380433,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC-PERP","strategy":"BTC_MEAN_REV","outcome":"LOSS","pnl":0,"winRate":0,"totalTrades":9,"consecutiveLosses":9}
+
+stderr | src/services/FullPipelineMultiWinner.e2e.test.ts > FullPipelineMultiWinnerE2E > Scenario: Tail Risk Mode blocks unallowed strategies
+[COMPLIANCE][WARN] [BTC-PERP] Applied active gates penalty for strategy=BTC_TREND: 1 gates failed. Score reduced from 95 to 85. Passed: true | JSON:{"timestamp":1785586380423,"level":"WARN","category":"COMPLIANCE","event":"gate_penalty_applied","asset":"BTC-PERP","strategy":"BTC_TREND","failedGatesCount":1,"previousScore":95,"score":85,"passed":true}
+[COMPLIANCE][WARN] [BTC-PERP] Applied active gates penalty for strategy=BTC_MEAN_REV: 1 gates failed. Score reduced from 95 to 85. Passed: true | JSON:{"timestamp":1785586380423,"level":"WARN","category":"COMPLIANCE","event":"gate_penalty_applied","asset":"BTC-PERP","strategy":"BTC_MEAN_REV","failedGatesCount":1,"previousScore":95,"score":85,"passed":true}
+[COMPLIANCE][WARN] [BTC-PERP] Global Active Gates Penalty applied: 1 gates failed. Quality score reduced from 85 to 75 | JSON:{"timestamp":1785586380425,"level":"WARN","category":"COMPLIANCE","event":"global_gate_penalty_applied","asset":"BTC-PERP","failedGatesCount":1,"previousScore":85,"score":75}
+
+[90mstdout[2m | src/services/FullPipelineMultiWinner.e2e.test.ts[2m > [22m[2mFullPipelineMultiWinnerE2E[2m > [22m[2mScenario: ExecutionStyleService assigns PASSIVE style in TAIL_RISK mode
+[22m[39m[QUANT][INFO] [BTC-PERP] generateSignal called. Price: 50000, Regime: UNKNOWN | JSON:{"timestamp":1785586380547,"level":"INFO","category":"QUANT","event":"signal_evaluation_start","asset":"BTC-PERP","regime":"UNKNOWN","price":50000}
+[QUANT][INFO] [BTC-PERP] Ranked Strategies evaluated for current market regime | JSON:{"timestamp":1785586380548,"level":"INFO","category":"QUANT","event":"strategies_ranked","asset":"BTC-PERP","rankedStrategies":[{"strat":"BTC_TREND","reason":"Mock Trend"},{"strat":"BTC_MEAN_REV","reason":"Mock Mean Rev"}]}
+[COMPLIANCE][INFO] [BTC-PERP] [Strategy: BTC_TREND] PASSED Gates. Score: 85 | JSON:{"timestamp":1785586380549,"level":"INFO","category":"COMPLIANCE","event":"gate_validation_passed","asset":"BTC-PERP","strategy":"BTC_TREND","score":85}
+[QUANT][INFO] [BTC-PERP] [Strategy: BTC_TREND] CANDIDATE signal generated (Score: 85, Config Threshold: 70, Hunter: false) | JSON:{"timestamp":1785586380549,"level":"INFO","category":"QUANT","event":"signal_candidate","asset":"BTC-PERP","strategy":"BTC_TREND","score":85,"threshold":70,"hunterMode":false}
+[COMPLIANCE][INFO] [BTC-PERP] [Strategy: BTC_MEAN_REV] PASSED Gates. Score: 85 | JSON:{"timestamp":1785586380598,"level":"INFO","category":"COMPLIANCE","event":"gate_validation_passed","asset":"BTC-PERP","strategy":"BTC_MEAN_REV","score":85}
+[QUANT][INFO] [BTC-PERP] [Strategy: BTC_MEAN_REV] CANDIDATE signal generated (Score: 85, Config Threshold: 70, Hunter: false) | JSON:{"timestamp":1785586380598,"level":"INFO","category":"QUANT","event":"signal_candidate","asset":"BTC-PERP","strategy":"BTC_MEAN_REV","score":85,"threshold":70,"hunterMode":false}
+stderr | src/services/FullPipelineMultiWinner.e2e.test.ts > FullPipelineMultiWinnerE2E > Scenario: ExecutionStyleService assigns PASSIVE style in TAIL_RISK mode
+[COMPLIANCE][WARN] [BTC-PERP] Applied active gates penalty for strategy=BTC_TREND: 1 gates failed. Score reduced from 95 to 85. Passed: true | JSON:{"timestamp":1785586380549,"level":"WARN","category":"COMPLIANCE","event":"gate_penalty_applied","asset":"BTC-PERP","strategy":"BTC_TREND","failedGatesCount":1,"previousScore":95,"score":85,"passed":true}
+[COMPLIANCE][WARN] [BTC-PERP] Applied active gates penalty for strategy=BTC_MEAN_REV: 1 gates failed. Score reduced from 95 to 85. Passed: true | JSON:{"timestamp":1785586380598,"level":"WARN","category":"COMPLIANCE","event":"gate_penalty_applied","asset":"BTC-PERP","strategy":"BTC_MEAN_REV","failedGatesCount":1,"previousScore":95,"score":85,"passed":true}
+[COMPLIANCE][WARN] [BTC-PERP] Global Active Gates Penalty applied: 1 gates failed. Quality score reduced from 85 to 75 | JSON:{"timestamp":1785586380598,"level":"WARN","category":"COMPLIANCE","event":"global_gate_penalty_applied","asset":"BTC-PERP","failedGatesCount":1,"previousScore":85,"score":75}
+
+[QUANT][INFO] [BTC-PERP] [Strategy: BTC_TREND] SELECTED as final coordinated signal (Score: 85) | JSON:{"timestamp":1785586380598,"level":"INFO","category":"QUANT","event":"signal_accepted","asset":"BTC-PERP","strategy":"BTC_TREND","score":85}
+[QUANT][INFO] [BTC-PERP] Final Analysis: qualityScore=75, direction=LONG, signal=true | JSON:{"timestamp":1785586380598,"level":"INFO","category":"QUANT","event":"signal_evaluation_end","asset":"BTC-PERP","score":75,"direction":"LONG","signalGenerated":true}
+[QUANT][INFO] [BTC-PERP] Execution Quality: NORMAL (Neutral microstructure) | JSON:{"timestamp":1785586380598,"level":"INFO","category":"QUANT","event":"execution_quality_evaluated","asset":"BTC-PERP","direction":"LONG","recommendedSize":1,"orderBookImbalance":null,"microPrice":null,"microPriceDeviation":null,"topLevelImbalance":null,"depthPressure":null,"normalizedOfi":null,"toxicityMetric":null,"volatilityProxy":1,"regime":"LOW_VOLATILITY","hunterMode":false,"executionMode":"NORMAL","referencePrice":null,"executionPenaltyFactor":1,"shouldDelay":false,"shouldSkip":false,"reason":"Neutral microstructure","eventVersion":"ExecQ_v1","service":"trading-engine","component":"execution-quality","timestampUtc":"2026-08-01T12:13:00.598Z"}
+[QUANT][INFO] [BTC-PERP] Execution Quality: NORMAL (Neutral microstructure) | JSON:{"timestamp":1785586380605,"level":"INFO","category":"QUANT","event":"execution_quality_evaluated","asset":"BTC-PERP","direction":"LONG","recommendedSize":1,"orderBookImbalance":null,"microPrice":null,"microPriceDeviation":null,"topLevelImbalance":null,"depthPressure":null,"normalizedOfi":null,"toxicityMetric":null,"volatilityProxy":1,"regime":"LOW_VOLATILITY","hunterMode":false,"executionMode":"NORMAL","referencePrice":null,"executionPenaltyFactor":1,"shouldDelay":false,"shouldSkip":false,"reason":"Neutral microstructure","eventVersion":"ExecQ_v1","service":"trading-engine","component":"execution-quality","timestampUtc":"2026-08-01T12:13:00.605Z"}
+[RISK][INFO] MetaStrategy allocation computed: 2 strategies, 2 zero-weighted, 0 boosted, 0 reduced | JSON:{"timestamp":1785586380606,"level":"INFO","category":"RISK","event":"meta_strategy_allocation","total":2,"zeroWeighted":2,"boosted":0,"reduced":0,"weights":[{"asset":"BTC-PERP","strategy":"BTC_TREND","weight":0,"reason":"Win rate too low: 0.0% < 40%"},{"asset":"BTC-PERP","strategy":"BTC_MEAN_REV","weight":0,"reason":"Win rate too low: 0.0% < 40%"}]}
+
+[90mstdout[2m | src/services/FullPipelineMultiWinner.e2e.test.ts[2m > [22m[2mFullPipelineMultiWinnerE2E[2m > [22m[2mScenario: ExecutionStyleService assigns PASSIVE style in TAIL_RISK mode
+[22m[39m[RISK][INFO] MetaStrategy allocation computed: 2 strategies, 2 zero-weighted, 0 boosted, 0 reduced | JSON:{"timestamp":1785586380608,"level":"INFO","category":"RISK","event":"meta_strategy_allocation","total":2,"zeroWeighted":2,"boosted":0,"reduced":0,"weights":[{"asset":"BTC-PERP","strategy":"BTC_TREND","weight":0,"reason":"Win rate too low: 0.0% < 40%"},{"asset":"BTC-PERP","strategy":"BTC_MEAN_REV","weight":0,"reason":"Win rate too low: 0.0% < 40%"}]}
+
+[90mstdout[2m | src/services/FullPipelineMultiWinner.e2e.test.ts[2m > [22m[2mFullPipelineMultiWinnerE2E[2m > [22m[2mScenario: SmartOrderRouterService assigns PRIMARY route for BTC in low vol (HIGH liquidity, AGGRESSIVE)
+[22m[39m[QUANT][INFO] [BTC-PERP] generateSignal called. Price: 50000, Regime: UNKNOWN | JSON:{"timestamp":1785586380616,"level":"INFO","category":"QUANT","event":"signal_evaluation_start","asset":"BTC-PERP","regime":"UNKNOWN","price":50000}
+[QUANT][INFO] [BTC-PERP] Ranked Strategies evaluated for current market regime | JSON:{"timestamp":1785586380616,"level":"INFO","category":"QUANT","event":"strategies_ranked","asset":"BTC-PERP","rankedStrategies":[{"strat":"BTC_TREND","reason":"Mock Trend"},{"strat":"BTC_MEAN_REV","reason":"Mock Mean Rev"}]}
+[COMPLIANCE][INFO] [BTC-PERP] [Strategy: BTC_TREND] PASSED Gates. Score: 85 | JSON:{"timestamp":1785586380617,"level":"INFO","category":"COMPLIANCE","event":"gate_validation_passed","asset":"BTC-PERP","strategy":"BTC_TREND","score":85}
+[QUANT][INFO] [BTC-PERP] [Strategy: BTC_TREND] CANDIDATE signal generated (Score: 85, Config Threshold: 70, Hunter: false) | JSON:{"timestamp":1785586380617,"level":"INFO","category":"QUANT","event":"signal_candidate","asset":"BTC-PERP","strategy":"BTC_TREND","score":85,"threshold":70,"hunterMode":false}
+[COMPLIANCE][INFO] [BTC-PERP] [Strategy: BTC_MEAN_REV] PASSED Gates. Score: 85 | JSON:{"timestamp":1785586380617,"level":"INFO","category":"COMPLIANCE","event":"gate_validation_passed","asset":"BTC-PERP","strategy":"BTC_MEAN_REV","score":85}
+[QUANT][INFO] [BTC-PERP] [Strategy: BTC_MEAN_REV] CANDIDATE signal generated (Score: 85, Config Threshold: 70, Hunter: false) | JSON:{"timestamp":1785586380617,"level":"INFO","category":"QUANT","event":"signal_candidate","asset":"BTC-PERP","strategy":"BTC_MEAN_REV","score":85,"threshold":70,"hunterMode":false}
+[QUANT][INFO] [BTC-PERP] [Strategy: BTC_TREND] SELECTED as final coordinated signal (Score: 85) | JSON:{"timestamp":1785586380617,"level":"INFO","category":"QUANT","event":"signal_accepted","asset":"BTC-PERP","strategy":"BTC_TREND","score":85}
+[QUANT][INFO] [BTC-PERP] Final Analysis: qualityScore=75, direction=LONG, signal=true | JSON:{"timestamp":1785586380617,"level":"INFO","category":"QUANT","event":"signal_evaluation_end","asset":"BTC-PERP","score":75,"direction":"LONG","signalGenerated":true}
+[QUANT][INFO] [BTC-PERP] Execution Quality: NORMAL (Neutral microstructure) | JSON:{"timestamp":1785586380618,"level":"INFO","category":"QUANT","event":"execution_quality_evaluated","asset":"BTC-PERP","direction":"LONG","recommendedSize":1,"orderBookImbalance":null,"microPrice":null,"microPriceDeviation":null,"topLevelImbalance":null,"depthPressure":null,"normalizedOfi":null,"toxicityMetric":null,"volatilityProxy":1,"regime":"LOW_VOLATILITY","hunterMode":false,"executionMode":"NORMAL","referencePrice":null,"executionPenaltyFactor":1,"shouldDelay":false,"shouldSkip":false,"reason":"Neutral microstructure","eventVersion":"ExecQ_v1","service":"trading-engine","component":"execution-quality","timestampUtc":"2026-08-01T12:13:00.618Z"}
+[QUANT][INFO] [BTC-PERP] Execution Quality: NORMAL (Neutral microstructure) | JSON:{"timestamp":1785586380618,"level":"INFO","category":"QUANT","event":"execution_quality_evaluated","asset":"BTC-PERP","direction":"LONG","recommendedSize":1,"orderBookImbalance":null,"microPrice":null,"microPriceDeviation":null,"topLevelImbalance":null,"depthPressure":null,"normalizedOfi":null,"toxicityMetric":null,"volatilityProxy":1,"regime":"LOW_VOLATILITY","hunterMode":false,"executionMode":"NORMAL","referencePrice":null,"executionPenaltyFactor":1,"shouldDelay":false,"shouldSkip":false,"reason":"Neutral microstructure","eventVersion":"ExecQ_v1","service":"trading-engine","component":"execution-quality","timestampUtc":"2026-08-01T12:13:00.618Z"}
+[RISK][INFO] MetaStrategy allocation computed: 2 strategies, 2 zero-weighted, 0 boosted, 0 reduced | JSON:{"timestamp":1785586380619,"level":"INFO","category":"RISK","event":"meta_strategy_allocation","total":2,"zeroWeighted":2,"boosted":0,"reduced":0,"weights":[{"asset":"BTC-PERP","strategy":"BTC_TREND","weight":0,"reason":"Win rate too low: 0.0% < 40%"},{"asset":"BTC-PERP","strategy":"BTC_MEAN_REV","weight":0,"reason":"Win rate too low: 0.0% < 40%"}]}
+
+stderr | src/services/FullPipelineMultiWinner.e2e.test.ts > FullPipelineMultiWinnerE2E > Scenario: SmartOrderRouterService assigns PRIMARY route for BTC in low vol (HIGH liquidity, AGGRESSIVE)
+[COMPLIANCE][WARN] [BTC-PERP] Applied active gates penalty for strategy=BTC_TREND: 1 gates failed. Score reduced from 95 to 85. Passed: true | JSON:{"timestamp":1785586380617,"level":"WARN","category":"COMPLIANCE","event":"gate_penalty_applied","asset":"BTC-PERP","strategy":"BTC_TREND","failedGatesCount":1,"previousScore":95,"score":85,"passed":true}
+[COMPLIANCE][WARN] [BTC-PERP] Applied active gates penalty for strategy=BTC_MEAN_REV: 1 gates failed. Score reduced from 95 to 85. Passed: true | JSON:{"timestamp":1785586380617,"level":"WARN","category":"COMPLIANCE","event":"gate_penalty_applied","asset":"BTC-PERP","strategy":"BTC_MEAN_REV","failedGatesCount":1,"previousScore":95,"score":85,"passed":true}
+[COMPLIANCE][WARN] [BTC-PERP] Global Active Gates Penalty applied: 1 gates failed. Quality score reduced from 85 to 75 | JSON:{"timestamp":1785586380617,"level":"WARN","category":"COMPLIANCE","event":"global_gate_penalty_applied","asset":"BTC-PERP","failedGatesCount":1,"previousScore":85,"score":75}
+
+[90mstdout[2m | src/services/FullPipelineMultiWinner.e2e.test.ts[2m > [22m[2mFullPipelineMultiWinnerE2E[2m > [22m[2mScenario: SmartOrderRouterService assigns PRIMARY route for BTC in low vol (HIGH liquidity, AGGRESSIVE)
+[22m[39m[RISK][INFO] MetaStrategy allocation computed: 2 strategies, 2 zero-weighted, 0 boosted, 0 reduced | JSON:{"timestamp":1785586380620,"level":"INFO","category":"RISK","event":"meta_strategy_allocation","total":2,"zeroWeighted":2,"boosted":0,"reduced":0,"weights":[{"asset":"BTC-PERP","strategy":"BTC_TREND","weight":0,"reason":"Win rate too low: 0.0% < 40%"},{"asset":"BTC-PERP","strategy":"BTC_MEAN_REV","weight":0,"reason":"Win rate too low: 0.0% < 40%"}]}
+
+[90mstdout[2m | src/services/FullPipelineMultiWinner.e2e.test.ts[2m > [22m[2mFullPipelineMultiWinnerE2E[2m > [22m[2mScenario: SmartOrderRouterService assigns SECONDARY route for ALT in low vol (MEDIUM liquidity, AGGRESSIVE)
+[22m[39m[QUANT][INFO] [ALT-PERP] generateSignal called. Price: 50000, Regime: UNKNOWN | JSON:{"timestamp":1785586380623,"level":"INFO","category":"QUANT","event":"signal_evaluation_start","asset":"ALT-PERP","regime":"UNKNOWN","price":50000}
+[QUANT][INFO] [ALT-PERP] Ranked Strategies evaluated for current market regime | JSON:{"timestamp":1785586380623,"level":"INFO","category":"QUANT","event":"strategies_ranked","asset":"ALT-PERP","rankedStrategies":[{"strat":"BTC_TREND","reason":"Mock Trend"},{"strat":"BTC_MEAN_REV","reason":"Mock Mean Rev"}]}
+[COMPLIANCE][INFO] [ALT-PERP] [Strategy: BTC_TREND] PASSED Gates. Score: 85 | JSON:{"timestamp":1785586380623,"level":"INFO","category":"COMPLIANCE","event":"gate_validation_passed","asset":"ALT-PERP","strategy":"BTC_TREND","score":85}
+stderr | src/services/FullPipelineMultiWinner.e2e.test.ts > FullPipelineMultiWinnerE2E > Scenario: SmartOrderRouterService assigns SECONDARY route for ALT in low vol (MEDIUM liquidity, AGGRESSIVE)
+[COMPLIANCE][WARN] [ALT-PERP] Applied active gates penalty for strategy=BTC_TREND: 1 gates failed. Score reduced from 95 to 85. Passed: true | JSON:{"timestamp":1785586380623,"level":"WARN","category":"COMPLIANCE","event":"gate_penalty_applied","asset":"ALT-PERP","strategy":"BTC_TREND","failedGatesCount":1,"previousScore":95,"score":85,"passed":true}
+[COMPLIANCE][WARN] [ALT-PERP] Applied active gates penalty for strategy=BTC_MEAN_REV: 1 gates failed. Score reduced from 95 to 85. Passed: true | JSON:{"timestamp":1785586380624,"level":"WARN","category":"COMPLIANCE","event":"gate_penalty_applied","asset":"ALT-PERP","strategy":"BTC_MEAN_REV","failedGatesCount":1,"previousScore":95,"score":85,"passed":true}
+[COMPLIANCE][WARN] [ALT-PERP] Global Active Gates Penalty applied: 1 gates failed. Quality score reduced from 85 to 75 | JSON:{"timestamp":1785586380624,"level":"WARN","category":"COMPLIANCE","event":"global_gate_penalty_applied","asset":"ALT-PERP","failedGatesCount":1,"previousScore":85,"score":75}
+
+[QUANT][INFO] [ALT-PERP] [Strategy: BTC_TREND] CANDIDATE signal generated (Score: 85, Config Threshold: 70, Hunter: false) | JSON:{"timestamp":1785586380623,"level":"INFO","category":"QUANT","event":"signal_candidate","asset":"ALT-PERP","strategy":"BTC_TREND","score":85,"threshold":70,"hunterMode":false}
+[COMPLIANCE][INFO] [ALT-PERP] [Strategy: BTC_MEAN_REV] PASSED Gates. Score: 85 | JSON:{"timestamp":1785586380624,"level":"INFO","category":"COMPLIANCE","event":"gate_validation_passed","asset":"ALT-PERP","strategy":"BTC_MEAN_REV","score":85}
+[QUANT][INFO] [ALT-PERP] [Strategy: BTC_MEAN_REV] CANDIDATE signal generated (Score: 85, Config Threshold: 70, Hunter: false) | JSON:{"timestamp":1785586380624,"level":"INFO","category":"QUANT","event":"signal_candidate","asset":"ALT-PERP","strategy":"BTC_MEAN_REV","score":85,"threshold":70,"hunterMode":false}
+[QUANT][INFO] [ALT-PERP] [Strategy: BTC_TREND] SELECTED as final coordinated signal (Score: 85) | JSON:{"timestamp":1785586380624,"level":"INFO","category":"QUANT","event":"signal_accepted","asset":"ALT-PERP","strategy":"BTC_TREND","score":85}
+[QUANT][INFO] [ALT-PERP] Final Analysis: qualityScore=75, direction=LONG, signal=true | JSON:{"timestamp":1785586380624,"level":"INFO","category":"QUANT","event":"signal_evaluation_end","asset":"ALT-PERP","score":75,"direction":"LONG","signalGenerated":true}
+[QUANT][INFO] [BTC-PERP] Execution Quality: NORMAL (Neutral microstructure) | JSON:{"timestamp":1785586380624,"level":"INFO","category":"QUANT","event":"execution_quality_evaluated","asset":"BTC-PERP","direction":"LONG","recommendedSize":1,"orderBookImbalance":null,"microPrice":null,"microPriceDeviation":null,"topLevelImbalance":null,"depthPressure":null,"normalizedOfi":null,"toxicityMetric":null,"volatilityProxy":1,"regime":"LOW_VOLATILITY","hunterMode":false,"executionMode":"NORMAL","referencePrice":null,"executionPenaltyFactor":1,"shouldDelay":false,"shouldSkip":false,"reason":"Neutral microstructure","eventVersion":"ExecQ_v1","service":"trading-engine","component":"execution-quality","timestampUtc":"2026-08-01T12:13:00.624Z"}
+[QUANT][INFO] [BTC-PERP] Execution Quality: NORMAL (Neutral microstructure) | JSON:{"timestamp":1785586380624,"level":"INFO","category":"QUANT","event":"execution_quality_evaluated","asset":"BTC-PERP","direction":"LONG","recommendedSize":1,"orderBookImbalance":null,"microPrice":null,"microPriceDeviation":null,"topLevelImbalance":null,"depthPressure":null,"normalizedOfi":null,"toxicityMetric":null,"volatilityProxy":1,"regime":"LOW_VOLATILITY","hunterMode":false,"executionMode":"NORMAL","referencePrice":null,"executionPenaltyFactor":1,"shouldDelay":false,"shouldSkip":false,"reason":"Neutral microstructure","eventVersion":"ExecQ_v1","service":"trading-engine","component":"execution-quality","timestampUtc":"2026-08-01T12:13:00.624Z"}
+[RISK][INFO] MetaStrategy allocation computed: 2 strategies, 2 zero-weighted, 0 boosted, 0 reduced | JSON:{"timestamp":1785586380625,"level":"INFO","category":"RISK","event":"meta_strategy_allocation","total":2,"zeroWeighted":2,"boosted":0,"reduced":0,"weights":[{"asset":"BTC-PERP","strategy":"BTC_TREND","weight":0,"reason":"Win rate too low: 0.0% < 40%"},{"asset":"BTC-PERP","strategy":"BTC_MEAN_REV","weight":0,"reason":"Win rate too low: 0.0% < 40%"}]}
+
+[90mstdout[2m | src/services/FullPipelineMultiWinner.e2e.test.ts[2m > [22m[2mFullPipelineMultiWinnerE2E[2m > [22m[2mScenario: SmartOrderRouterService assigns SECONDARY route for ALT in low vol (MEDIUM liquidity, AGGRESSIVE)
+[22m[39m[RISK][INFO] MetaStrategy allocation computed: 2 strategies, 2 zero-weighted, 0 boosted, 0 reduced | JSON:{"timestamp":1785586380627,"level":"INFO","category":"RISK","event":"meta_strategy_allocation","total":2,"zeroWeighted":2,"boosted":0,"reduced":0,"weights":[{"asset":"BTC-PERP","strategy":"BTC_TREND","weight":0,"reason":"Win rate too low: 0.0% < 40%"},{"asset":"BTC-PERP","strategy":"BTC_MEAN_REV","weight":0,"reason":"Win rate too low: 0.0% < 40%"}]}
+
+[90mstdout[2m | src/services/FullPipelineMultiWinner.e2e.test.ts[2m > [22m[2mFullPipelineMultiWinnerE2E[2m > [22m[2mScenario: ExecutionAnalyticsService attaches analytics to trace
+[22m[39m[QUANT][INFO] [BTC-PERP] generateSignal called. Price: 50000, Regime: UNKNOWN | JSON:{"timestamp":1785586380631,"level":"INFO","category":"QUANT","event":"signal_evaluation_start","asset":"BTC-PERP","regime":"UNKNOWN","price":50000}
+[QUANT][INFO] [BTC-PERP] Ranked Strategies evaluated for current market regime | JSON:{"timestamp":1785586380631,"level":"INFO","category":"QUANT","event":"strategies_ranked","asset":"BTC-PERP","rankedStrategies":[{"strat":"BTC_TREND","reason":"Mock Trend"},{"strat":"BTC_MEAN_REV","reason":"Mock Mean Rev"}]}
+[COMPLIANCE][INFO] [BTC-PERP] [Strategy: BTC_TREND] PASSED Gates. Score: 85 | JSON:{"timestamp":1785586380631,"level":"INFO","category":"COMPLIANCE","event":"gate_validation_passed","asset":"BTC-PERP","strategy":"BTC_TREND","score":85}
+[QUANT][INFO] [BTC-PERP] [Strategy: BTC_TREND] CANDIDATE signal generated (Score: 85, Config Threshold: 70, Hunter: false) | JSON:{"timestamp":1785586380631,"level":"INFO","category":"QUANT","event":"signal_candidate","asset":"BTC-PERP","strategy":"BTC_TREND","score":85,"threshold":70,"hunterMode":false}
+[COMPLIANCE][INFO] [BTC-PERP] [Strategy: BTC_MEAN_REV] PASSED Gates. Score: 85 | JSON:{"timestamp":1785586380631,"level":"INFO","category":"COMPLIANCE","event":"gate_validation_passed","asset":"BTC-PERP","strategy":"BTC_MEAN_REV","score":85}
+[QUANT][INFO] [BTC-PERP] [Strategy: BTC_MEAN_REV] CANDIDATE signal generated (Score: 85, Config Threshold: 70, Hunter: false) | JSON:{"timestamp":1785586380631,"level":"INFO","category":"QUANT","event":"signal_candidate","asset":"BTC-PERP","strategy":"BTC_MEAN_REV","score":85,"threshold":70,"hunterMode":false}
+[QUANT][INFO] [BTC-PERP] [Strategy: BTC_TREND] SELECTED as final coordinated signal (Score: 85) | JSON:{"timestamp":1785586380632,"level":"INFO","category":"QUANT","event":"signal_accepted","asset":"BTC-PERP","strategy":"BTC_TREND","score":85}
+[QUANT][INFO] [BTC-PERP] Final Analysis: qualityScore=75, direction=LONG, signal=true | JSON:{"timestamp":1785586380632,"level":"INFO","category":"QUANT","event":"signal_evaluation_end","asset":"BTC-PERP","score":75,"direction":"LONG","signalGenerated":true}
+[QUANT][INFO] [BTC-PERP] Execution Quality: NORMAL (Neutral microstructure) | JSON:{"timestamp":1785586380632,"level":"INFO","category":"QUANT","event":"execution_quality_evaluated","asset":"BTC-PERP","direction":"LONG","recommendedSize":1,"orderBookImbalance":null,"microPrice":null,"microPriceDeviation":null,"topLevelImbalance":null,"depthPressure":null,"normalizedOfi":null,"toxicityMetric":null,"volatilityProxy":1,"regime":"LOW_VOLATILITY","hunterMode":false,"executionMode":"NORMAL","referencePrice":null,"executionPenaltyFactor":1,"shouldDelay":false,"shouldSkip":false,"reason":"Neutral microstructure","eventVersion":"ExecQ_v1","service":"trading-engine","component":"execution-quality","timestampUtc":"2026-08-01T12:13:00.632Z"}
+[QUANT][INFO] [BTC-PERP] Execution Quality: NORMAL (Neutral microstructure) | JSON:{"timestamp":1785586380632,"level":"INFO","category":"QUANT","event":"execution_quality_evaluated","asset":"BTC-PERP","direction":"LONG","recommendedSize":1,"orderBookImbalance":null,"microPrice":null,"microPriceDeviation":null,"topLevelImbalance":null,"depthPressure":null,"normalizedOfi":null,"toxicityMetric":null,"volatilityProxy":1,"regime":"LOW_VOLATILITY","hunterMode":false,"executionMode":"NORMAL","referencePrice":null,"executionPenaltyFactor":1,"shouldDelay":false,"shouldSkip":false,"reason":"Neutral microstructure","eventVersion":"ExecQ_v1","service":"trading-engine","component":"execution-quality","timestampUtc":"2026-08-01T12:13:00.632Z"}
+[RISK][INFO] MetaStrategy allocation computed: 2 strategies, 2 zero-weighted, 0 boosted, 0 reduced | JSON:{"timestamp":1785586380633,"level":"INFO","category":"RISK","event":"meta_strategy_allocation","total":2,"zeroWeighted":2,"boosted":0,"reduced":0,"weights":[{"asset":"BTC-PERP","strategy":"BTC_TREND","weight":0,"reason":"Win rate too low: 0.0% < 40%"},{"asset":"BTC-PERP","strategy":"BTC_MEAN_REV","weight":0,"reason":"Win rate too low: 0.0% < 40%"}]}
+
+stderr | src/services/FullPipelineMultiWinner.e2e.test.ts > FullPipelineMultiWinnerE2E > Scenario: ExecutionAnalyticsService attaches analytics to trace
+[COMPLIANCE][WARN] [BTC-PERP] Applied active gates penalty for strategy=BTC_TREND: 1 gates failed. Score reduced from 95 to 85. Passed: true | JSON:{"timestamp":1785586380631,"level":"WARN","category":"COMPLIANCE","event":"gate_penalty_applied","asset":"BTC-PERP","strategy":"BTC_TREND","failedGatesCount":1,"previousScore":95,"score":85,"passed":true}
+[COMPLIANCE][WARN] [BTC-PERP] Applied active gates penalty for strategy=BTC_MEAN_REV: 1 gates failed. Score reduced from 95 to 85. Passed: true | JSON:{"timestamp":1785586380631,"level":"WARN","category":"COMPLIANCE","event":"gate_penalty_applied","asset":"BTC-PERP","strategy":"BTC_MEAN_REV","failedGatesCount":1,"previousScore":95,"score":85,"passed":true}
+[COMPLIANCE][WARN] [BTC-PERP] Global Active Gates Penalty applied: 1 gates failed. Quality score reduced from 85 to 75 | JSON:{"timestamp":1785586380632,"level":"WARN","category":"COMPLIANCE","event":"global_gate_penalty_applied","asset":"BTC-PERP","failedGatesCount":1,"previousScore":85,"score":75}
+
+[90mstdout[2m | src/services/FullPipelineMultiWinner.e2e.test.ts[2m > [22m[2mFullPipelineMultiWinnerE2E[2m > [22m[2mScenario: ExecutionAnalyticsService attaches analytics to trace
+[22m[39m[RISK][INFO] MetaStrategy allocation computed: 2 strategies, 2 zero-weighted, 0 boosted, 0 reduced | JSON:{"timestamp":1785586380668,"level":"INFO","category":"RISK","event":"meta_strategy_allocation","total":2,"zeroWeighted":2,"boosted":0,"reduced":0,"weights":[{"asset":"BTC-PERP","strategy":"BTC_TREND","weight":0,"reason":"Win rate too low: 0.0% < 40%"},{"asset":"BTC-PERP","strategy":"BTC_MEAN_REV","weight":0,"reason":"Win rate too low: 0.0% < 40%"}]}
+
+[90mstdout[2m | src/services/FullPipelineMultiWinner.e2e.test.ts[2m > [22m[2mFullPipelineMultiWinnerE2E[2m > [22m[2mScenario: ChildOrderSchedulerService attaches childOrders to trace
+[22m[39m[QUANT][INFO] [BTC-PERP] generateSignal called. Price: 50000, Regime: UNKNOWN | JSON:{"timestamp":1785586380689,"level":"INFO","category":"QUANT","event":"signal_evaluation_start","asset":"BTC-PERP","regime":"UNKNOWN","price":50000}
+[QUANT][INFO] [BTC-PERP] Ranked Strategies evaluated for current market regime | JSON:{"timestamp":1785586380689,"level":"INFO","category":"QUANT","event":"strategies_ranked","asset":"BTC-PERP","rankedStrategies":[{"strat":"BTC_TREND","reason":"Mock Trend"},{"strat":"BTC_MEAN_REV","reason":"Mock Mean Rev"}]}
+[COMPLIANCE][INFO] [BTC-PERP] [Strategy: BTC_TREND] PASSED Gates. Score: 85 | JSON:{"timestamp":1785586380690,"level":"INFO","category":"COMPLIANCE","event":"gate_validation_passed","asset":"BTC-PERP","strategy":"BTC_TREND","score":85}
+[QUANT][INFO] [BTC-PERP] [Strategy: BTC_TREND] CANDIDATE signal generated (Score: 85, Config Threshold: 70, Hunter: false) | JSON:{"timestamp":1785586380690,"level":"INFO","category":"QUANT","event":"signal_candidate","asset":"BTC-PERP","strategy":"BTC_TREND","score":85,"threshold":70,"hunterMode":false}
+[COMPLIANCE][INFO] [BTC-PERP] [Strategy: BTC_MEAN_REV] PASSED Gates. Score: 85 | JSON:{"timestamp":1785586380690,"level":"INFO","category":"COMPLIANCE","event":"gate_validation_passed","asset":"BTC-PERP","strategy":"BTC_MEAN_REV","score":85}
+[QUANT][INFO] [BTC-PERP] [Strategy: BTC_MEAN_REV] CANDIDATE signal generated (Score: 85, Config Threshold: 70, Hunter: false) | JSON:{"timestamp":1785586380690,"level":"INFO","category":"QUANT","event":"signal_candidate","asset":"BTC-PERP","strategy":"BTC_MEAN_REV","score":85,"threshold":70,"hunterMode":false}
+[QUANT][INFO] [BTC-PERP] [Strategy: BTC_TREND] SELECTED as final coordinated signal (Score: 85) | JSON:{"timestamp":1785586380690,"level":"INFO","category":"QUANT","event":"signal_accepted","asset":"BTC-PERP","strategy":"BTC_TREND","score":85}
+[QUANT][INFO] [BTC-PERP] Final Analysis: qualityScore=75, direction=LONG, signal=true | JSON:{"timestamp":1785586380690,"level":"INFO","category":"QUANT","event":"signal_evaluation_end","asset":"BTC-PERP","score":75,"direction":"LONG","signalGenerated":true}
+stderr | src/services/FullPipelineMultiWinner.e2e.test.ts > FullPipelineMultiWinnerE2E > Scenario: ChildOrderSchedulerService attaches childOrders to trace
+[COMPLIANCE][WARN] [BTC-PERP] Applied active gates penalty for strategy=BTC_TREND: 1 gates failed. Score reduced from 95 to 85. Passed: true | JSON:{"timestamp":1785586380690,"level":"WARN","category":"COMPLIANCE","event":"gate_penalty_applied","asset":"BTC-PERP","strategy":"BTC_TREND","failedGatesCount":1,"previousScore":95,"score":85,"passed":true}
+[COMPLIANCE][WARN] [BTC-PERP] Applied active gates penalty for strategy=BTC_MEAN_REV: 1 gates failed. Score reduced from 95 to 85. Passed: true | JSON:{"timestamp":1785586380690,"level":"WARN","category":"COMPLIANCE","event":"gate_penalty_applied","asset":"BTC-PERP","strategy":"BTC_MEAN_REV","failedGatesCount":1,"previousScore":95,"score":85,"passed":true}
+[QUANT][INFO] [BTC-PERP] Execution Quality: NORMAL (Neutral microstructure) | JSON:{"timestamp":1785586380691,"level":"INFO","category":"QUANT","event":"execution_quality_evaluated","asset":"BTC-PERP","direction":"LONG","recommendedSize":1,"orderBookImbalance":null,"microPrice":null,"microPriceDeviation":null,"topLevelImbalance":null,"depthPressure":null,"normalizedOfi":null,"toxicityMetric":null,"volatilityProxy":1,"regime":"LOW_VOLATILITY","hunterMode":false,"executionMode":"NORMAL","referencePrice":null,"executionPenaltyFactor":1,"shouldDelay":false,"shouldSkip":false,"reason":"Neutral microstructure","eventVersion":"ExecQ_v1","service":"trading-engine","component":"execution-quality","timestampUtc":"2026-08-01T12:13:00.691Z"}
+[QUANT][INFO] [BTC-PERP] Execution Quality: NORMAL (Neutral microstructure) | JSON:{"timestamp":1785586380691,"level":"INFO","category":"QUANT","event":"execution_quality_evaluated","asset":"BTC-PERP","direction":"LONG","recommendedSize":1,"orderBookImbalance":null,"microPrice":null,"microPriceDeviation":null,"topLevelImbalance":null,"depthPressure":null,"normalizedOfi":null,"toxicityMetric":null,"volatilityProxy":1,"regime":"LOW_VOLATILITY","hunterMode":false,"executionMode":"NORMAL","referencePrice":null,"executionPenaltyFactor":1,"shouldDelay":false,"shouldSkip":false,"reason":"Neutral microstructure","eventVersion":"ExecQ_v1","service":"trading-engine","component":"execution-quality","timestampUtc":"2026-08-01T12:13:00.691Z"}
+[COMPLIANCE][WARN] [BTC-PERP] Global Active Gates Penalty applied: 1 gates failed. Quality score reduced from 85 to 75 | JSON:{"timestamp":1785586380690,"level":"WARN","category":"COMPLIANCE","event":"global_gate_penalty_applied","asset":"BTC-PERP","failedGatesCount":1,"previousScore":85,"score":75}
+
+[RISK][INFO] MetaStrategy allocation computed: 2 strategies, 2 zero-weighted, 0 boosted, 0 reduced | JSON:{"timestamp":1785586380692,"level":"INFO","category":"RISK","event":"meta_strategy_allocation","total":2,"zeroWeighted":2,"boosted":0,"reduced":0,"weights":[{"asset":"BTC-PERP","strategy":"BTC_TREND","weight":0,"reason":"Win rate too low: 0.0% < 40%"},{"asset":"BTC-PERP","strategy":"BTC_MEAN_REV","weight":0,"reason":"Win rate too low: 0.0% < 40%"}]}
+
+[90mstdout[2m | src/services/FullPipelineMultiWinner.e2e.test.ts[2m > [22m[2mFullPipelineMultiWinnerE2E[2m > [22m[2mScenario: ChildOrderSchedulerService attaches childOrders to trace
+[22m[39m[RISK][INFO] MetaStrategy allocation computed: 2 strategies, 2 zero-weighted, 0 boosted, 0 reduced | JSON:{"timestamp":1785586380695,"level":"INFO","category":"RISK","event":"meta_strategy_allocation","total":2,"zeroWeighted":2,"boosted":0,"reduced":0,"weights":[{"asset":"BTC-PERP","strategy":"BTC_TREND","weight":0,"reason":"Win rate too low: 0.0% < 40%"},{"asset":"BTC-PERP","strategy":"BTC_MEAN_REV","weight":0,"reason":"Win rate too low: 0.0% < 40%"}]}
+
+[90mstdout[2m | src/services/FullPipelineMultiWinner.e2e.test.ts[2m > [22m[2mFullPipelineMultiWinnerE2E[2m > [22m[2mScenario: ExecutionTcaAggregatorService attaches parentTcaSummary to trace
+[22m[39m[QUANT][INFO] [BTC-PERP] generateSignal called. Price: 50000, Regime: UNKNOWN | JSON:{"timestamp":1785586380698,"level":"INFO","category":"QUANT","event":"signal_evaluation_start","asset":"BTC-PERP","regime":"UNKNOWN","price":50000}
+[QUANT][INFO] [BTC-PERP] Ranked Strategies evaluated for current market regime | JSON:{"timestamp":1785586380698,"level":"INFO","category":"QUANT","event":"strategies_ranked","asset":"BTC-PERP","rankedStrategies":[{"strat":"BTC_TREND","reason":"Mock Trend"},{"strat":"BTC_MEAN_REV","reason":"Mock Mean Rev"}]}
+[COMPLIANCE][INFO] [BTC-PERP] [Strategy: BTC_TREND] PASSED Gates. Score: 85 | JSON:{"timestamp":1785586380698,"level":"INFO","category":"COMPLIANCE","event":"gate_validation_passed","asset":"BTC-PERP","strategy":"BTC_TREND","score":85}
+[QUANT][INFO] [BTC-PERP] [Strategy: BTC_TREND] CANDIDATE signal generated (Score: 85, Config Threshold: 70, Hunter: false) | JSON:{"timestamp":1785586380698,"level":"INFO","category":"QUANT","event":"signal_candidate","asset":"BTC-PERP","strategy":"BTC_TREND","score":85,"threshold":70,"hunterMode":false}
+[COMPLIANCE][INFO] [BTC-PERP] [Strategy: BTC_MEAN_REV] PASSED Gates. Score: 85 | JSON:{"timestamp":1785586380699,"level":"INFO","category":"COMPLIANCE","event":"gate_validation_passed","asset":"BTC-PERP","strategy":"BTC_MEAN_REV","score":85}
+[QUANT][INFO] [BTC-PERP] [Strategy: BTC_MEAN_REV] CANDIDATE signal generated (Score: 85, Config Threshold: 70, Hunter: false) | JSON:{"timestamp":1785586380699,"level":"INFO","category":"QUANT","event":"signal_candidate","asset":"BTC-PERP","strategy":"BTC_MEAN_REV","score":85,"threshold":70,"hunterMode":false}
+[QUANT][INFO] [BTC-PERP] [Strategy: BTC_TREND] SELECTED as final coordinated signal (Score: 85) | JSON:{"timestamp":1785586380699,"level":"INFO","category":"QUANT","event":"signal_accepted","asset":"BTC-PERP","strategy":"BTC_TREND","score":85}
+[QUANT][INFO] [BTC-PERP] Final Analysis: qualityScore=75, direction=LONG, signal=true | JSON:{"timestamp":1785586380699,"level":"INFO","category":"QUANT","event":"signal_evaluation_end","asset":"BTC-PERP","score":75,"direction":"LONG","signalGenerated":true}
+stderr | src/services/FullPipelineMultiWinner.e2e.test.ts > FullPipelineMultiWinnerE2E > Scenario: ExecutionTcaAggregatorService attaches parentTcaSummary to trace
+[COMPLIANCE][WARN] [BTC-PERP] Applied active gates penalty for strategy=BTC_TREND: 1 gates failed. Score reduced from 95 to 85. Passed: true | JSON:{"timestamp":1785586380698,"level":"WARN","category":"COMPLIANCE","event":"gate_penalty_applied","asset":"BTC-PERP","strategy":"BTC_TREND","failedGatesCount":1,"previousScore":95,"score":85,"passed":true}
+[COMPLIANCE][WARN] [BTC-PERP] Applied active gates penalty for strategy=BTC_MEAN_REV: 1 gates failed. Score reduced from 95 to 85. Passed: true | JSON:{"timestamp":1785586380699,"level":"WARN","category":"COMPLIANCE","event":"gate_penalty_applied","asset":"BTC-PERP","strategy":"BTC_MEAN_REV","failedGatesCount":1,"previousScore":95,"score":85,"passed":true}
+[QUANT][INFO] [BTC-PERP] Execution Quality: NORMAL (Neutral microstructure) | JSON:{"timestamp":1785586380699,"level":"INFO","category":"QUANT","event":"execution_quality_evaluated","asset":"BTC-PERP","direction":"LONG","recommendedSize":1,"orderBookImbalance":null,"microPrice":null,"microPriceDeviation":null,"topLevelImbalance":null,"depthPressure":null,"normalizedOfi":null,"toxicityMetric":null,"volatilityProxy":1,"regime":"LOW_VOLATILITY","hunterMode":false,"executionMode":"NORMAL","referencePrice":null,"executionPenaltyFactor":1,"shouldDelay":false,"shouldSkip":false,"reason":"Neutral microstructure","eventVersion":"ExecQ_v1","service":"trading-engine","component":"execution-quality","timestampUtc":"2026-08-01T12:13:00.699Z"}
+[QUANT][INFO] [BTC-PERP] Execution Quality: NORMAL (Neutral microstructure) | JSON:{"timestamp":1785586380699,"level":"INFO","category":"QUANT","event":"execution_quality_evaluated","asset":"BTC-PERP","direction":"LONG","recommendedSize":1,"orderBookImbalance":null,"microPrice":null,"microPriceDeviation":null,"topLevelImbalance":null,"depthPressure":null,"normalizedOfi":null,"toxicityMetric":null,"volatilityProxy":1,"regime":"LOW_VOLATILITY","hunterMode":false,"executionMode":"NORMAL","referencePrice":null,"executionPenaltyFactor":1,"shouldDelay":false,"shouldSkip":false,"reason":"Neutral microstructure","eventVersion":"ExecQ_v1","service":"trading-engine","component":"execution-quality","timestampUtc":"2026-08-01T12:13:00.699Z"}
+[COMPLIANCE][WARN] [BTC-PERP] Global Active Gates Penalty applied: 1 gates failed. Quality score reduced from 85 to 75 | JSON:{"timestamp":1785586380699,"level":"WARN","category":"COMPLIANCE","event":"global_gate_penalty_applied","asset":"BTC-PERP","failedGatesCount":1,"previousScore":85,"score":75}
+
+[RISK][INFO] MetaStrategy allocation computed: 2 strategies, 2 zero-weighted, 0 boosted, 0 reduced | JSON:{"timestamp":1785586380700,"level":"INFO","category":"RISK","event":"meta_strategy_allocation","total":2,"zeroWeighted":2,"boosted":0,"reduced":0,"weights":[{"asset":"BTC-PERP","strategy":"BTC_TREND","weight":0,"reason":"Win rate too low: 0.0% < 40%"},{"asset":"BTC-PERP","strategy":"BTC_MEAN_REV","weight":0,"reason":"Win rate too low: 0.0% < 40%"}]}
+
+[90mstdout[2m | src/services/FullPipelineMultiWinner.e2e.test.ts[2m > [22m[2mFullPipelineMultiWinnerE2E[2m > [22m[2mScenario: ExecutionTcaAggregatorService attaches parentTcaSummary to trace
+[22m[39m[RISK][INFO] MetaStrategy allocation computed: 2 strategies, 2 zero-weighted, 0 boosted, 0 reduced | JSON:{"timestamp":1785586380702,"level":"INFO","category":"RISK","event":"meta_strategy_allocation","total":2,"zeroWeighted":2,"boosted":0,"reduced":0,"weights":[{"asset":"BTC-PERP","strategy":"BTC_TREND","weight":0,"reason":"Win rate too low: 0.0% < 40%"},{"asset":"BTC-PERP","strategy":"BTC_MEAN_REV","weight":0,"reason":"Win rate too low: 0.0% < 40%"}]}
+
+[90mstdout[2m | src/services/FullPipelineMultiWinner.e2e.test.ts[2m > [22m[2mFullPipelineMultiWinnerE2E[2m > [22m[2mScenario: ExecutionQualityMonitorService attaches alerts to trace
+[22m[39m[QUANT][INFO] [BTC-PERP] generateSignal called. Price: 50000, Regime: UNKNOWN | JSON:{"timestamp":1785586380705,"level":"INFO","category":"QUANT","event":"signal_evaluation_start","asset":"BTC-PERP","regime":"UNKNOWN","price":50000}
+[QUANT][INFO] [BTC-PERP] Ranked Strategies evaluated for current market regime | JSON:{"timestamp":1785586380705,"level":"INFO","category":"QUANT","event":"strategies_ranked","asset":"BTC-PERP","rankedStrategies":[{"strat":"BTC_TREND","reason":"Mock Trend"},{"strat":"BTC_MEAN_REV","reason":"Mock Mean Rev"}]}
+[COMPLIANCE][INFO] [BTC-PERP] [Strategy: BTC_TREND] PASSED Gates. Score: 85 | JSON:{"timestamp":1785586380705,"level":"INFO","category":"COMPLIANCE","event":"gate_validation_passed","asset":"BTC-PERP","strategy":"BTC_TREND","score":85}
+[QUANT][INFO] [BTC-PERP] [Strategy: BTC_TREND] CANDIDATE signal generated (Score: 85, Config Threshold: 70, Hunter: false) | JSON:{"timestamp":1785586380705,"level":"INFO","category":"QUANT","event":"signal_candidate","asset":"BTC-PERP","strategy":"BTC_TREND","score":85,"threshold":70,"hunterMode":false}
+[COMPLIANCE][INFO] [BTC-PERP] [Strategy: BTC_MEAN_REV] PASSED Gates. Score: 85 | JSON:{"timestamp":1785586380706,"level":"INFO","category":"COMPLIANCE","event":"gate_validation_passed","asset":"BTC-PERP","strategy":"BTC_MEAN_REV","score":85}
+[QUANT][INFO] [BTC-PERP] [Strategy: BTC_MEAN_REV] CANDIDATE signal generated (Score: 85, Config Threshold: 70, Hunter: false) | JSON:{"timestamp":1785586380706,"level":"INFO","category":"QUANT","event":"signal_candidate","asset":"BTC-PERP","strategy":"BTC_MEAN_REV","score":85,"threshold":70,"hunterMode":false}
+[QUANT][INFO] [BTC-PERP] [Strategy: BTC_TREND] SELECTED as final coordinated signal (Score: 85) | JSON:{"timestamp":1785586380706,"level":"INFO","category":"QUANT","event":"signal_accepted","asset":"BTC-PERP","strategy":"BTC_TREND","score":85}
+[QUANT][INFO] [BTC-PERP] Final Analysis: qualityScore=75, direction=LONG, signal=true | JSON:{"timestamp":1785586380706,"level":"INFO","category":"QUANT","event":"signal_evaluation_end","asset":"BTC-PERP","score":75,"direction":"LONG","signalGenerated":true}
+stderr | src/services/FullPipelineMultiWinner.e2e.test.ts > FullPipelineMultiWinnerE2E > Scenario: ExecutionQualityMonitorService attaches alerts to trace
+[COMPLIANCE][WARN] [BTC-PERP] Applied active gates penalty for strategy=BTC_TREND: 1 gates failed. Score reduced from 95 to 85. Passed: true | JSON:{"timestamp":1785586380705,"level":"WARN","category":"COMPLIANCE","event":"gate_penalty_applied","asset":"BTC-PERP","strategy":"BTC_TREND","failedGatesCount":1,"previousScore":95,"score":85,"passed":true}
+[COMPLIANCE][WARN] [BTC-PERP] Applied active gates penalty for strategy=BTC_MEAN_REV: 1 gates failed. Score reduced from 95 to 85. Passed: true | JSON:{"timestamp":1785586380706,"level":"WARN","category":"COMPLIANCE","event":"gate_penalty_applied","asset":"BTC-PERP","strategy":"BTC_MEAN_REV","failedGatesCount":1,"previousScore":95,"score":85,"passed":true}
+[QUANT][INFO] [BTC-PERP] Execution Quality: NORMAL (Neutral microstructure) | JSON:{"timestamp":1785586380706,"level":"INFO","category":"QUANT","event":"execution_quality_evaluated","asset":"BTC-PERP","direction":"LONG","recommendedSize":1,"orderBookImbalance":null,"microPrice":null,"microPriceDeviation":null,"topLevelImbalance":null,"depthPressure":null,"normalizedOfi":null,"toxicityMetric":null,"volatilityProxy":1,"regime":"LOW_VOLATILITY","hunterMode":false,"executionMode":"NORMAL","referencePrice":null,"executionPenaltyFactor":1,"shouldDelay":false,"shouldSkip":false,"reason":"Neutral microstructure","eventVersion":"ExecQ_v1","service":"trading-engine","component":"execution-quality","timestampUtc":"2026-08-01T12:13:00.706Z"}
+[QUANT][INFO] [BTC-PERP] Execution Quality: NORMAL (Neutral microstructure) | JSON:{"timestamp":1785586380706,"level":"INFO","category":"QUANT","event":"execution_quality_evaluated","asset":"BTC-PERP","direction":"LONG","recommendedSize":1,"orderBookImbalance":null,"microPrice":null,"microPriceDeviation":null,"topLevelImbalance":null,"depthPressure":null,"normalizedOfi":null,"toxicityMetric":null,"volatilityProxy":1,"regime":"LOW_VOLATILITY","hunterMode":false,"executionMode":"NORMAL","referencePrice":null,"executionPenaltyFactor":1,"shouldDelay":false,"shouldSkip":false,"reason":"Neutral microstructure","eventVersion":"ExecQ_v1","service":"trading-engine","component":"execution-quality","timestampUtc":"2026-08-01T12:13:00.706Z"}
+[COMPLIANCE][WARN] [BTC-PERP] Global Active Gates Penalty applied: 1 gates failed. Quality score reduced from 85 to 75 | JSON:{"timestamp":1785586380706,"level":"WARN","category":"COMPLIANCE","event":"global_gate_penalty_applied","asset":"BTC-PERP","failedGatesCount":1,"previousScore":85,"score":75}
+
+[RISK][INFO] MetaStrategy allocation computed: 2 strategies, 2 zero-weighted, 0 boosted, 0 reduced | JSON:{"timestamp":1785586380707,"level":"INFO","category":"RISK","event":"meta_strategy_allocation","total":2,"zeroWeighted":2,"boosted":0,"reduced":0,"weights":[{"asset":"BTC-PERP","strategy":"BTC_TREND","weight":0,"reason":"Win rate too low: 0.0% < 40%"},{"asset":"BTC-PERP","strategy":"BTC_MEAN_REV","weight":0,"reason":"Win rate too low: 0.0% < 40%"}]}
+
+[90mstdout[2m | src/services/FullPipelineMultiWinner.e2e.test.ts[2m > [22m[2mFullPipelineMultiWinnerE2E[2m > [22m[2mScenario: ExecutionQualityMonitorService attaches alerts to trace
+[22m[39m[RISK][INFO] MetaStrategy allocation computed: 2 strategies, 2 zero-weighted, 0 boosted, 0 reduced | JSON:{"timestamp":1785586380709,"level":"INFO","category":"RISK","event":"meta_strategy_allocation","total":2,"zeroWeighted":2,"boosted":0,"reduced":0,"weights":[{"asset":"BTC-PERP","strategy":"BTC_TREND","weight":0,"reason":"Win rate too low: 0.0% < 40%"},{"asset":"BTC-PERP","strategy":"BTC_MEAN_REV","weight":0,"reason":"Win rate too low: 0.0% < 40%"}]}
+
+[90mstdout[2m | src/services/FullPipelineMultiWinner.e2e.test.ts[2m > [22m[2mFullPipelineMultiWinnerE2E[2m > [22m[2mScenario: PostTradeExecutionReportService attaches report to trace
+[22m[39m[QUANT][INFO] [BTC-PERP] generateSignal called. Price: 50000, Regime: UNKNOWN | JSON:{"timestamp":1785586380714,"level":"INFO","category":"QUANT","event":"signal_evaluation_start","asset":"BTC-PERP","regime":"UNKNOWN","price":50000}
+[QUANT][INFO] [BTC-PERP] Ranked Strategies evaluated for current market regime | JSON:{"timestamp":1785586380714,"level":"INFO","category":"QUANT","event":"strategies_ranked","asset":"BTC-PERP","rankedStrategies":[{"strat":"BTC_TREND","reason":"Mock Trend"},{"strat":"BTC_MEAN_REV","reason":"Mock Mean Rev"}]}
+[COMPLIANCE][INFO] [BTC-PERP] [Strategy: BTC_TREND] PASSED Gates. Score: 85 | JSON:{"timestamp":1785586380715,"level":"INFO","category":"COMPLIANCE","event":"gate_validation_passed","asset":"BTC-PERP","strategy":"BTC_TREND","score":85}
+[QUANT][INFO] [BTC-PERP] [Strategy: BTC_TREND] CANDIDATE signal generated (Score: 85, Config Threshold: 70, Hunter: false) | JSON:{"timestamp":1785586380715,"level":"INFO","category":"QUANT","event":"signal_candidate","asset":"BTC-PERP","strategy":"BTC_TREND","score":85,"threshold":70,"hunterMode":false}
+[COMPLIANCE][INFO] [BTC-PERP] [Strategy: BTC_MEAN_REV] PASSED Gates. Score: 85 | JSON:{"timestamp":1785586380716,"level":"INFO","category":"COMPLIANCE","event":"gate_validation_passed","asset":"BTC-PERP","strategy":"BTC_MEAN_REV","score":85}
+[QUANT][INFO] [BTC-PERP] [Strategy: BTC_MEAN_REV] CANDIDATE signal generated (Score: 85, Config Threshold: 70, Hunter: false) | JSON:{"timestamp":1785586380716,"level":"INFO","category":"QUANT","event":"signal_candidate","asset":"BTC-PERP","strategy":"BTC_MEAN_REV","score":85,"threshold":70,"hunterMode":false}
+[QUANT][INFO] [BTC-PERP] [Strategy: BTC_TREND] SELECTED as final coordinated signal (Score: 85) | JSON:{"timestamp":1785586380716,"level":"INFO","category":"QUANT","event":"signal_accepted","asset":"BTC-PERP","strategy":"BTC_TREND","score":85}
+[QUANT][INFO] [BTC-PERP] Final Analysis: qualityScore=75, direction=LONG, signal=true | JSON:{"timestamp":1785586380716,"level":"INFO","category":"QUANT","event":"signal_evaluation_end","asset":"BTC-PERP","score":75,"direction":"LONG","signalGenerated":true}
+stderr | src/services/FullPipelineMultiWinner.e2e.test.ts > FullPipelineMultiWinnerE2E > Scenario: PostTradeExecutionReportService attaches report to trace
+[COMPLIANCE][WARN] [BTC-PERP] Applied active gates penalty for strategy=BTC_TREND: 1 gates failed. Score reduced from 95 to 85. Passed: true | JSON:{"timestamp":1785586380714,"level":"WARN","category":"COMPLIANCE","event":"gate_penalty_applied","asset":"BTC-PERP","strategy":"BTC_TREND","failedGatesCount":1,"previousScore":95,"score":85,"passed":true}
+[COMPLIANCE][WARN] [BTC-PERP] Applied active gates penalty for strategy=BTC_MEAN_REV: 1 gates failed. Score reduced from 95 to 85. Passed: true | JSON:{"timestamp":1785586380715,"level":"WARN","category":"COMPLIANCE","event":"gate_penalty_applied","asset":"BTC-PERP","strategy":"BTC_MEAN_REV","failedGatesCount":1,"previousScore":95,"score":85,"passed":true}
+[QUANT][INFO] [BTC-PERP] Execution Quality: NORMAL (Neutral microstructure) | JSON:{"timestamp":1785586380717,"level":"INFO","category":"QUANT","event":"execution_quality_evaluated","asset":"BTC-PERP","direction":"LONG","recommendedSize":1,"orderBookImbalance":null,"microPrice":null,"microPriceDeviation":null,"topLevelImbalance":null,"depthPressure":null,"normalizedOfi":null,"toxicityMetric":null,"volatilityProxy":1,"regime":"LOW_VOLATILITY","hunterMode":false,"executionMode":"NORMAL","referencePrice":null,"executionPenaltyFactor":1,"shouldDelay":false,"shouldSkip":false,"reason":"Neutral microstructure","eventVersion":"ExecQ_v1","service":"trading-engine","component":"execution-quality","timestampUtc":"2026-08-01T12:13:00.716Z"}
+[QUANT][INFO] [BTC-PERP] Execution Quality: NORMAL (Neutral microstructure) | JSON:{"timestamp":1785586380717,"level":"INFO","category":"QUANT","event":"execution_quality_evaluated","asset":"BTC-PERP","direction":"LONG","recommendedSize":1,"orderBookImbalance":null,"microPrice":null,"microPriceDeviation":null,"topLevelImbalance":null,"depthPressure":null,"normalizedOfi":null,"toxicityMetric":null,"volatilityProxy":1,"regime":"LOW_VOLATILITY","hunterMode":false,"executionMode":"NORMAL","referencePrice":null,"executionPenaltyFactor":1,"shouldDelay":false,"shouldSkip":false,"reason":"Neutral microstructure","eventVersion":"ExecQ_v1","service":"trading-engine","component":"execution-quality","timestampUtc":"2026-08-01T12:13:00.717Z"}
+[COMPLIANCE][WARN] [BTC-PERP] Global Active Gates Penalty applied: 1 gates failed. Quality score reduced from 85 to 75 | JSON:{"timestamp":1785586380716,"level":"WARN","category":"COMPLIANCE","event":"global_gate_penalty_applied","asset":"BTC-PERP","failedGatesCount":1,"previousScore":85,"score":75}
+
+[RISK][INFO] MetaStrategy allocation computed: 2 strategies, 2 zero-weighted, 0 boosted, 0 reduced | JSON:{"timestamp":1785586380717,"level":"INFO","category":"RISK","event":"meta_strategy_allocation","total":2,"zeroWeighted":2,"boosted":0,"reduced":0,"weights":[{"asset":"BTC-PERP","strategy":"BTC_TREND","weight":0,"reason":"Win rate too low: 0.0% < 40%"},{"asset":"BTC-PERP","strategy":"BTC_MEAN_REV","weight":0,"reason":"Win rate too low: 0.0% < 40%"}]}
+
+[90mstdout[2m | src/services/FullPipelineMultiWinner.e2e.test.ts[2m > [22m[2mFullPipelineMultiWinnerE2E[2m > [22m[2mScenario: PostTradeExecutionReportService attaches report to trace
+[22m[39m[RISK][INFO] MetaStrategy allocation computed: 2 strategies, 2 zero-weighted, 0 boosted, 0 reduced | JSON:{"timestamp":1785586380720,"level":"INFO","category":"RISK","event":"meta_strategy_allocation","total":2,"zeroWeighted":2,"boosted":0,"reduced":0,"weights":[{"asset":"BTC-PERP","strategy":"BTC_TREND","weight":0,"reason":"Win rate too low: 0.0% < 40%"},{"asset":"BTC-PERP","strategy":"BTC_MEAN_REV","weight":0,"reason":"Win rate too low: 0.0% < 40%"}]}
+
+ [31mΓ¥»[39m src/services/FullPipelineMultiWinner.e2e.test.ts [2m([22m[2m22 tests[22m[2m | [22m[31m9 failed[39m[2m)[22m[33m 864[2mms[22m[39m
+[31m     [31m├ù[31m Scenario: Tail Risk Mode blocks unallowed strategies[39m[32m 108[2mms[22m[39m
+[31m     [31m├ù[31m Scenario: ExecutionStyleService assigns PASSIVE style in TAIL_RISK mode[39m[32m 69[2mms[22m[39m
+[31m     [31m├ù[31m Scenario: SmartOrderRouterService assigns PRIMARY route for BTC in low vol (HIGH liquidity, AGGRESSIVE)[39m[32m 7[2mms[22m[39m
+[31m     [31m├ù[31m Scenario: SmartOrderRouterService assigns SECONDARY route for ALT in low vol (MEDIUM liquidity, AGGRESSIVE)[39m[32m 8[2mms[22m[39m
+[31m     [31m├ù[31m Scenario: ExecutionAnalyticsService attaches analytics to trace[39m[32m 52[2mms[22m[39m
+[31m     [31m├ù[31m Scenario: ChildOrderSchedulerService attaches childOrders to trace[39m[32m 15[2mms[22m[39m
+[31m     [31m├ù[31m Scenario: ExecutionTcaAggregatorService attaches parentTcaSummary to trace[39m[32m 7[2mms[22m[39m
+[31m     [31m├ù[31m Scenario: ExecutionQualityMonitorService attaches alerts to trace[39m[32m 7[2mms[22m[39m
+[31m     [31m├ù[31m Scenario: PostTradeExecutionReportService attaches report to trace[39m[32m 18[2mms[22m[39m
+[90mstdout[2m | src/services/AssetPerformanceMonitor.test.ts[2m > [22m[2mAssetPerformanceMonitor[2m > [22m[2mshouldDisable[2m > [22m[2mshould disable when win rate is below threshold after minimum trades
+[22m[39m[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: WIN, PnL=100.00, WR=100.0% | JSON:{"timestamp":1785586381597,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"WIN","pnl":100,"winRate":1,"totalTrades":1,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: WIN, PnL=100.00, WR=100.0% | JSON:{"timestamp":1785586381597,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"WIN","pnl":100,"winRate":1,"totalTrades":2,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: WIN, PnL=100.00, WR=100.0% | JSON:{"timestamp":1785586381597,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"WIN","pnl":100,"winRate":1,"totalTrades":3,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: WIN, PnL=100.00, WR=100.0% | JSON:{"timestamp":1785586381597,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"WIN","pnl":100,"winRate":1,"totalTrades":4,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: WIN, PnL=100.00, WR=100.0% | JSON:{"timestamp":1785586381597,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"WIN","pnl":100,"winRate":1,"totalTrades":5,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=83.3% | JSON:{"timestamp":1785586381597,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.8333333333333334,"totalTrades":6,"consecutiveLosses":1}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=71.4% | JSON:{"timestamp":1785586381597,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.7142857142857143,"totalTrades":7,"consecutiveLosses":2}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=62.5% | JSON:{"timestamp":1785586381597,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.625,"totalTrades":8,"consecutiveLosses":3}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=55.6% | JSON:{"timestamp":1785586381597,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.5555555555555556,"totalTrades":9,"consecutiveLosses":4}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=50.0% | JSON:{"timestamp":1785586381597,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.5,"totalTrades":10,"consecutiveLosses":5}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=45.5% | JSON:{"timestamp":1785586381597,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.45454545454545453,"totalTrades":11,"consecutiveLosses":6}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=41.7% | JSON:{"timestamp":1785586381598,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.4166666666666667,"totalTrades":12,"consecutiveLosses":7}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=38.5% | JSON:{"timestamp":1785586381598,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.38461538461538464,"totalTrades":13,"consecutiveLosses":8}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=35.7% | JSON:{"timestamp":1785586381598,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.35714285714285715,"totalTrades":14,"consecutiveLosses":9}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=33.3% | JSON:{"timestamp":1785586381598,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.3333333333333333,"totalTrades":15,"consecutiveLosses":10}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=31.3% | JSON:{"timestamp":1785586381598,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.3125,"totalTrades":16,"consecutiveLosses":11}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=29.4% | JSON:{"timestamp":1785586381598,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.29411764705882354,"totalTrades":17,"consecutiveLosses":12}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=27.8% | JSON:{"timestamp":1785586381598,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.2777777777777778,"totalTrades":18,"consecutiveLosses":13}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=26.3% | JSON:{"timestamp":1785586381598,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.2631578947368421,"totalTrades":19,"consecutiveLosses":14}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=25.0% | JSON:{"timestamp":1785586381598,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.25,"totalTrades":20,"consecutiveLosses":15}
+
+[90mstdout[2m | src/services/AssetPerformanceMonitor.test.ts[2m > [22m[2mAssetPerformanceMonitor[2m > [22m[2mshouldDisable[2m > [22m[2mshould disable after 10 consecutive losses
+[22m[39m[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=0.0% | JSON:{"timestamp":1785586381649,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0,"totalTrades":1,"consecutiveLosses":1}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=0.0% | JSON:{"timestamp":1785586381649,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0,"totalTrades":2,"consecutiveLosses":2}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=0.0% | JSON:{"timestamp":1785586381650,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0,"totalTrades":3,"consecutiveLosses":3}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=0.0% | JSON:{"timestamp":1785586381650,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0,"totalTrades":4,"consecutiveLosses":4}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=0.0% | JSON:{"timestamp":1785586381650,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0,"totalTrades":5,"consecutiveLosses":5}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=0.0% | JSON:{"timestamp":1785586381650,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0,"totalTrades":6,"consecutiveLosses":6}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=0.0% | JSON:{"timestamp":1785586381650,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0,"totalTrades":7,"consecutiveLosses":7}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=0.0% | JSON:{"timestamp":1785586381650,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0,"totalTrades":8,"consecutiveLosses":8}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=0.0% | JSON:{"timestamp":1785586381650,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0,"totalTrades":9,"consecutiveLosses":9}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=0.0% | JSON:{"timestamp":1785586381650,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0,"totalTrades":10,"consecutiveLosses":10}
+
+[90mstdout[2m | src/services/AssetPerformanceMonitor.test.ts[2m > [22m[2mAssetPerformanceMonitor[2m > [22m[2mshouldDisable[2m > [22m[2mshould not re-disable an already disabled strategy
+[22m[39m[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: WIN, PnL=100.00, WR=100.0% | JSON:{"timestamp":1785586381653,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"WIN","pnl":100,"winRate":1,"totalTrades":1,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: WIN, PnL=100.00, WR=100.0% | JSON:{"timestamp":1785586381653,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"WIN","pnl":100,"winRate":1,"totalTrades":2,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: WIN, PnL=100.00, WR=100.0% | JSON:{"timestamp":1785586381654,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"WIN","pnl":100,"winRate":1,"totalTrades":3,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: WIN, PnL=100.00, WR=100.0% | JSON:{"timestamp":1785586381654,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"WIN","pnl":100,"winRate":1,"totalTrades":4,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: WIN, PnL=100.00, WR=100.0% | JSON:{"timestamp":1785586381654,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"WIN","pnl":100,"winRate":1,"totalTrades":5,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=83.3% | JSON:{"timestamp":1785586381654,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.8333333333333334,"totalTrades":6,"consecutiveLosses":1}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=71.4% | JSON:{"timestamp":1785586381654,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.7142857142857143,"totalTrades":7,"consecutiveLosses":2}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=62.5% | JSON:{"timestamp":1785586381654,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.625,"totalTrades":8,"consecutiveLosses":3}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=55.6% | JSON:{"timestamp":1785586381654,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.5555555555555556,"totalTrades":9,"consecutiveLosses":4}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=50.0% | JSON:{"timestamp":1785586381654,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.5,"totalTrades":10,"consecutiveLosses":5}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=45.5% | JSON:{"timestamp":1785586381654,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.45454545454545453,"totalTrades":11,"consecutiveLosses":6}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=41.7% | JSON:{"timestamp":1785586381654,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.4166666666666667,"totalTrades":12,"consecutiveLosses":7}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=38.5% | JSON:{"timestamp":1785586381654,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.38461538461538464,"totalTrades":13,"consecutiveLosses":8}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=35.7% | JSON:{"timestamp":1785586381654,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.35714285714285715,"totalTrades":14,"consecutiveLosses":9}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=33.3% | JSON:{"timestamp":1785586381654,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.3333333333333333,"totalTrades":15,"consecutiveLosses":10}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=31.3% | JSON:{"timestamp":1785586381654,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.3125,"totalTrades":16,"consecutiveLosses":11}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=29.4% | JSON:{"timestamp":1785586381654,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.29411764705882354,"totalTrades":17,"consecutiveLosses":12}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=27.8% | JSON:{"timestamp":1785586381655,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.2777777777777778,"totalTrades":18,"consecutiveLosses":13}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=26.3% | JSON:{"timestamp":1785586381655,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.2631578947368421,"totalTrades":19,"consecutiveLosses":14}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=25.0% | JSON:{"timestamp":1785586381655,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.25,"totalTrades":20,"consecutiveLosses":15}
+
+[90mstdout[2m | src/services/AssetPerformanceMonitor.test.ts[2m > [22m[2mAssetPerformanceMonitor[2m > [22m[2mshouldReenable[2m > [22m[2mshould re-enable a disabled strategy when win rate recovers
+[22m[39m[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: WIN, PnL=100.00, WR=100.0% | JSON:{"timestamp":1785586381669,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"WIN","pnl":100,"winRate":1,"totalTrades":1,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: WIN, PnL=100.00, WR=100.0% | JSON:{"timestamp":1785586381669,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"WIN","pnl":100,"winRate":1,"totalTrades":2,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: WIN, PnL=100.00, WR=100.0% | JSON:{"timestamp":1785586381669,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"WIN","pnl":100,"winRate":1,"totalTrades":3,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: WIN, PnL=100.00, WR=100.0% | JSON:{"timestamp":1785586381669,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"WIN","pnl":100,"winRate":1,"totalTrades":4,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: WIN, PnL=100.00, WR=100.0% | JSON:{"timestamp":1785586381669,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"WIN","pnl":100,"winRate":1,"totalTrades":5,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=83.3% | JSON:{"timestamp":1785586381670,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.8333333333333334,"totalTrades":6,"consecutiveLosses":1}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=71.4% | JSON:{"timestamp":1785586381670,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.7142857142857143,"totalTrades":7,"consecutiveLosses":2}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=62.5% | JSON:{"timestamp":1785586381670,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.625,"totalTrades":8,"consecutiveLosses":3}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=55.6% | JSON:{"timestamp":1785586381670,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.5555555555555556,"totalTrades":9,"consecutiveLosses":4}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=50.0% | JSON:{"timestamp":1785586381670,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.5,"totalTrades":10,"consecutiveLosses":5}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=45.5% | JSON:{"timestamp":1785586381670,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.45454545454545453,"totalTrades":11,"consecutiveLosses":6}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=41.7% | JSON:{"timestamp":1785586381676,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.4166666666666667,"totalTrades":12,"consecutiveLosses":7}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=38.5% | JSON:{"timestamp":1785586381676,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.38461538461538464,"totalTrades":13,"consecutiveLosses":8}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=35.7% | JSON:{"timestamp":1785586381676,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.35714285714285715,"totalTrades":14,"consecutiveLosses":9}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=33.3% | JSON:{"timestamp":1785586381676,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.3333333333333333,"totalTrades":15,"consecutiveLosses":10}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=31.3% | JSON:{"timestamp":1785586381676,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.3125,"totalTrades":16,"consecutiveLosses":11}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=29.4% | JSON:{"timestamp":1785586381677,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.29411764705882354,"totalTrades":17,"consecutiveLosses":12}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=27.8% | JSON:{"timestamp":1785586381677,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.2777777777777778,"totalTrades":18,"consecutiveLosses":13}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=26.3% | JSON:{"timestamp":1785586381677,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.2631578947368421,"totalTrades":19,"consecutiveLosses":14}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=25.0% | JSON:{"timestamp":1785586381677,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.25,"totalTrades":20,"consecutiveLosses":15}
+
+[90mstdout[2m | src/services/AssetPerformanceMonitor.test.ts[2m > [22m[2mAssetPerformanceMonitor[2m > [22m[2misDisabled[2m > [22m[2mshould return true after automatic disable
+[22m[39m[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: WIN, PnL=100.00, WR=100.0% | JSON:{"timestamp":1785586381700,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"WIN","pnl":100,"winRate":1,"totalTrades":1,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: WIN, PnL=100.00, WR=100.0% | JSON:{"timestamp":1785586381700,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"WIN","pnl":100,"winRate":1,"totalTrades":2,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: WIN, PnL=100.00, WR=100.0% | JSON:{"timestamp":1785586381700,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"WIN","pnl":100,"winRate":1,"totalTrades":3,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: WIN, PnL=100.00, WR=100.0% | JSON:{"timestamp":1785586381700,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"WIN","pnl":100,"winRate":1,"totalTrades":4,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: WIN, PnL=100.00, WR=100.0% | JSON:{"timestamp":1785586381700,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"WIN","pnl":100,"winRate":1,"totalTrades":5,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=83.3% | JSON:{"timestamp":1785586381701,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.8333333333333334,"totalTrades":6,"consecutiveLosses":1}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=71.4% | JSON:{"timestamp":1785586381701,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.7142857142857143,"totalTrades":7,"consecutiveLosses":2}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=62.5% | JSON:{"timestamp":1785586381701,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.625,"totalTrades":8,"consecutiveLosses":3}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=55.6% | JSON:{"timestamp":1785586381701,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.5555555555555556,"totalTrades":9,"consecutiveLosses":4}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=50.0% | JSON:{"timestamp":1785586381701,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.5,"totalTrades":10,"consecutiveLosses":5}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=45.5% | JSON:{"timestamp":1785586381701,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.45454545454545453,"totalTrades":11,"consecutiveLosses":6}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=41.7% | JSON:{"timestamp":1785586381701,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.4166666666666667,"totalTrades":12,"consecutiveLosses":7}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=38.5% | JSON:{"timestamp":1785586381701,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.38461538461538464,"totalTrades":13,"consecutiveLosses":8}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=35.7% | JSON:{"timestamp":1785586381701,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.35714285714285715,"totalTrades":14,"consecutiveLosses":9}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=33.3% | JSON:{"timestamp":1785586381701,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.3333333333333333,"totalTrades":15,"consecutiveLosses":10}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=31.3% | JSON:{"timestamp":1785586381701,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.3125,"totalTrades":16,"consecutiveLosses":11}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=29.4% | JSON:{"timestamp":1785586381701,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.29411764705882354,"totalTrades":17,"consecutiveLosses":12}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=27.8% | JSON:{"timestamp":1785586381701,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.2777777777777778,"totalTrades":18,"consecutiveLosses":13}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=26.3% | JSON:{"timestamp":1785586381702,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.2631578947368421,"totalTrades":19,"consecutiveLosses":14}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=25.0% | JSON:{"timestamp":1785586381702,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.25,"totalTrades":20,"consecutiveLosses":15}
+
+[90mstdout[2m | src/services/AssetPerformanceMonitor.test.ts[2m > [22m[2mAssetPerformanceMonitor[2m > [22m[2mgetDisabledStrategies[2m > [22m[2mshould return all disabled strategies
+[22m[39m[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: WIN, PnL=100.00, WR=100.0% | JSON:{"timestamp":1785586381738,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"WIN","pnl":100,"winRate":1,"totalTrades":1,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: WIN, PnL=100.00, WR=100.0% | JSON:{"timestamp":1785586381739,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"WIN","pnl":100,"winRate":1,"totalTrades":2,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: WIN, PnL=100.00, WR=100.0% | JSON:{"timestamp":1785586381739,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"WIN","pnl":100,"winRate":1,"totalTrades":3,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: WIN, PnL=100.00, WR=100.0% | JSON:{"timestamp":1785586381739,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"WIN","pnl":100,"winRate":1,"totalTrades":4,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: WIN, PnL=100.00, WR=100.0% | JSON:{"timestamp":1785586381739,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"WIN","pnl":100,"winRate":1,"totalTrades":5,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=83.3% | JSON:{"timestamp":1785586381739,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.8333333333333334,"totalTrades":6,"consecutiveLosses":1}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=71.4% | JSON:{"timestamp":1785586381739,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.7142857142857143,"totalTrades":7,"consecutiveLosses":2}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=62.5% | JSON:{"timestamp":1785586381739,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.625,"totalTrades":8,"consecutiveLosses":3}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=55.6% | JSON:{"timestamp":1785586381739,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.5555555555555556,"totalTrades":9,"consecutiveLosses":4}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=50.0% | JSON:{"timestamp":1785586381740,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.5,"totalTrades":10,"consecutiveLosses":5}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=45.5% | JSON:{"timestamp":1785586381740,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.45454545454545453,"totalTrades":11,"consecutiveLosses":6}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=41.7% | JSON:{"timestamp":1785586381740,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.4166666666666667,"totalTrades":12,"consecutiveLosses":7}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=38.5% | JSON:{"timestamp":1785586381740,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.38461538461538464,"totalTrades":13,"consecutiveLosses":8}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=35.7% | JSON:{"timestamp":1785586381740,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.35714285714285715,"totalTrades":14,"consecutiveLosses":9}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=33.3% | JSON:{"timestamp":1785586381740,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.3333333333333333,"totalTrades":15,"consecutiveLosses":10}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=31.3% | JSON:{"timestamp":1785586381740,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.3125,"totalTrades":16,"consecutiveLosses":11}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=29.4% | JSON:{"timestamp":1785586381740,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.29411764705882354,"totalTrades":17,"consecutiveLosses":12}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=27.8% | JSON:{"timestamp":1785586381741,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.2777777777777778,"totalTrades":18,"consecutiveLosses":13}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=26.3% | JSON:{"timestamp":1785586381741,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.2631578947368421,"totalTrades":19,"consecutiveLosses":14}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=25.0% | JSON:{"timestamp":1785586381741,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.25,"totalTrades":20,"consecutiveLosses":15}
+[EXEC][INFO] [BTC/BTC_SCALPER] Trade recorded: WIN, PnL=50.00, WR=100.0% | JSON:{"timestamp":1785586381741,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_SCALPER","outcome":"WIN","pnl":50,"winRate":1,"totalTrades":1,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_SCALPER] Trade recorded: WIN, PnL=50.00, WR=100.0% | JSON:{"timestamp":1785586381742,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_SCALPER","outcome":"WIN","pnl":50,"winRate":1,"totalTrades":2,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_SCALPER] Trade recorded: WIN, PnL=50.00, WR=100.0% | JSON:{"timestamp":1785586381743,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_SCALPER","outcome":"WIN","pnl":50,"winRate":1,"totalTrades":3,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_SCALPER] Trade recorded: WIN, PnL=50.00, WR=100.0% | JSON:{"timestamp":1785586381743,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_SCALPER","outcome":"WIN","pnl":50,"winRate":1,"totalTrades":4,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_SCALPER] Trade recorded: WIN, PnL=50.00, WR=100.0% | JSON:{"timestamp":1785586381743,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_SCALPER","outcome":"WIN","pnl":50,"winRate":1,"totalTrades":5,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_SCALPER] Trade recorded: WIN, PnL=50.00, WR=100.0% | JSON:{"timestamp":1785586381743,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_SCALPER","outcome":"WIN","pnl":50,"winRate":1,"totalTrades":6,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_SCALPER] Trade recorded: WIN, PnL=50.00, WR=100.0% | JSON:{"timestamp":1785586381743,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_SCALPER","outcome":"WIN","pnl":50,"winRate":1,"totalTrades":7,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_SCALPER] Trade recorded: WIN, PnL=50.00, WR=100.0% | JSON:{"timestamp":1785586381743,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_SCALPER","outcome":"WIN","pnl":50,"winRate":1,"totalTrades":8,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_SCALPER] Trade recorded: WIN, PnL=50.00, WR=100.0% | JSON:{"timestamp":1785586381744,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_SCALPER","outcome":"WIN","pnl":50,"winRate":1,"totalTrades":9,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_SCALPER] Trade recorded: WIN, PnL=50.00, WR=100.0% | JSON:{"timestamp":1785586381744,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_SCALPER","outcome":"WIN","pnl":50,"winRate":1,"totalTrades":10,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_SCALPER] Trade recorded: WIN, PnL=50.00, WR=100.0% | JSON:{"timestamp":1785586381744,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_SCALPER","outcome":"WIN","pnl":50,"winRate":1,"totalTrades":11,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_SCALPER] Trade recorded: WIN, PnL=50.00, WR=100.0% | JSON:{"timestamp":1785586381744,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_SCALPER","outcome":"WIN","pnl":50,"winRate":1,"totalTrades":12,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_SCALPER] Trade recorded: WIN, PnL=50.00, WR=100.0% | JSON:{"timestamp":1785586381744,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_SCALPER","outcome":"WIN","pnl":50,"winRate":1,"totalTrades":13,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_SCALPER] Trade recorded: WIN, PnL=50.00, WR=100.0% | JSON:{"timestamp":1785586381744,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_SCALPER","outcome":"WIN","pnl":50,"winRate":1,"totalTrades":14,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_SCALPER] Trade recorded: WIN, PnL=50.00, WR=100.0% | JSON:{"timestamp":1785586381744,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_SCALPER","outcome":"WIN","pnl":50,"winRate":1,"totalTrades":15,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_SCALPER] Trade recorded: WIN, PnL=50.00, WR=100.0% | JSON:{"timestamp":1785586381744,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_SCALPER","outcome":"WIN","pnl":50,"winRate":1,"totalTrades":16,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_SCALPER] Trade recorded: WIN, PnL=50.00, WR=100.0% | JSON:{"timestamp":1785586381744,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_SCALPER","outcome":"WIN","pnl":50,"winRate":1,"totalTrades":17,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_SCALPER] Trade recorded: WIN, PnL=50.00, WR=100.0% | JSON:{"timestamp":1785586381744,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_SCALPER","outcome":"WIN","pnl":50,"winRate":1,"totalTrades":18,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_SCALPER] Trade recorded: LOSS, PnL=-25.00, WR=94.7% | JSON:{"timestamp":1785586381744,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_SCALPER","outcome":"LOSS","pnl":-25,"winRate":0.9473684210526315,"totalTrades":19,"consecutiveLosses":1}
+[EXEC][INFO] [BTC/BTC_SCALPER] Trade recorded: LOSS, PnL=-25.00, WR=90.0% | JSON:{"timestamp":1785586381744,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_SCALPER","outcome":"LOSS","pnl":-25,"winRate":0.9,"totalTrades":20,"consecutiveLosses":2}
+
+[90mstdout[2m | src/services/AssetPerformanceMonitor.test.ts[2m > [22m[2mAssetPerformanceMonitor[2m > [22m[2mreset[2m > [22m[2mshould clear all stats and disabled flags
+[22m[39m[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: WIN, PnL=100.00, WR=100.0% | JSON:{"timestamp":1785586381748,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"WIN","pnl":100,"winRate":1,"totalTrades":1,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: WIN, PnL=100.00, WR=100.0% | JSON:{"timestamp":1785586381748,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"WIN","pnl":100,"winRate":1,"totalTrades":2,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: WIN, PnL=100.00, WR=100.0% | JSON:{"timestamp":1785586381748,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"WIN","pnl":100,"winRate":1,"totalTrades":3,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: WIN, PnL=100.00, WR=100.0% | JSON:{"timestamp":1785586381748,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"WIN","pnl":100,"winRate":1,"totalTrades":4,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: WIN, PnL=100.00, WR=100.0% | JSON:{"timestamp":1785586381748,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"WIN","pnl":100,"winRate":1,"totalTrades":5,"consecutiveLosses":0}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=83.3% | JSON:{"timestamp":1785586381748,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.8333333333333334,"totalTrades":6,"consecutiveLosses":1}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=71.4% | JSON:{"timestamp":1785586381749,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.7142857142857143,"totalTrades":7,"consecutiveLosses":2}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=62.5% | JSON:{"timestamp":1785586381749,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.625,"totalTrades":8,"consecutiveLosses":3}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=55.6% | JSON:{"timestamp":1785586381749,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.5555555555555556,"totalTrades":9,"consecutiveLosses":4}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=50.0% | JSON:{"timestamp":1785586381749,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.5,"totalTrades":10,"consecutiveLosses":5}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=45.5% | JSON:{"timestamp":1785586381750,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.45454545454545453,"totalTrades":11,"consecutiveLosses":6}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=41.7% | JSON:{"timestamp":1785586381750,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.4166666666666667,"totalTrades":12,"consecutiveLosses":7}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=38.5% | JSON:{"timestamp":1785586381750,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.38461538461538464,"totalTrades":13,"consecutiveLosses":8}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=35.7% | JSON:{"timestamp":1785586381750,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.35714285714285715,"totalTrades":14,"consecutiveLosses":9}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=33.3% | JSON:{"timestamp":1785586381750,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.3333333333333333,"totalTrades":15,"consecutiveLosses":10}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=31.3% | JSON:{"timestamp":1785586381750,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.3125,"totalTrades":16,"consecutiveLosses":11}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=29.4% | JSON:{"timestamp":1785586381750,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.29411764705882354,"totalTrades":17,"consecutiveLosses":12}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=27.8% | JSON:{"timestamp":1785586381750,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.2777777777777778,"totalTrades":18,"consecutiveLosses":13}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=26.3% | JSON:{"timestamp":1785586381750,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.2631578947368421,"totalTrades":19,"consecutiveLosses":14}
+[EXEC][INFO] [BTC/BTC_TREND] Trade recorded: LOSS, PnL=-50.00, WR=25.0% | JSON:{"timestamp":1785586381750,"level":"INFO","category":"EXEC","event":"performance_recorded","asset":"BTC","strategy":"BTC_TREND","outcome":"LOSS","pnl":-50,"winRate":0.25,"totalTrades":20,"consecutiveLosses":15}
+
+ [31mΓ¥»[39m src/services/AssetPerformanceMonitor.test.ts [2m([22m[2m13 tests[22m[2m | [22m[31m7 failed[39m[2m)[22m[32m 182[2mms[22m[39m
+[31m       [31m├ù[31m should disable when win rate is below threshold after minimum trades[39m[32m 42[2mms[22m[39m
+[31m       [31m├ù[31m should disable after 10 consecutive losses[39m[32m 5[2mms[22m[39m
+[31m       [31m├ù[31m should not re-disable an already disabled strategy[39m[32m 15[2mms[22m[39m
+[31m       [31m├ù[31m should re-enable a disabled strategy when win rate recovers[39m[32m 17[2mms[22m[39m
+[31m       [31m├ù[31m should return true after automatic disable[39m[32m 42[2mms[22m[39m
+[31m       [31m├ù[31m should return all disabled strategies[39m[32m 15[2mms[22m[39m
+[31m       [31m├ù[31m should clear all stats and disabled flags[39m[32m 5[2mms[22m[39m
+stderr | src/services/TradingControlService.test.ts > TradingControlService > 3. triggers auto cooldown after max skip bursts
+[SYSTEM][WARN] Execution skip bursts reached threshold for GLOBAL | JSON:{"timestamp":1785586382717,"level":"WARN","category":"SYSTEM","event":"control_block"}
+
+stderr | src/services/TradingControlService.test.ts > TradingControlService > 5. auto expiry of cooldown
+[SYSTEM][WARN] Execution skip bursts reached threshold for GLOBAL | JSON:{"timestamp":1785586382731,"level":"WARN","category":"SYSTEM","event":"control_block"}
+
+ [31mΓ¥»[39m src/services/TradingControlService.test.ts [2m([22m[2m10 tests[22m[2m | [22m[31m4 failed[39m[2m)[22m[32m 167[2mms[22m[39m
+[31m     [31m├ù[31m 2. manual kill switch forces BLOCKED mode[39m[32m 25[2mms[22m[39m
+[31m     [31m├ù[31m 3. triggers auto cooldown after max skip bursts[39m[32m 6[2mms[22m[39m
+[31m     [31m├ù[31m 5. auto expiry of cooldown[39m[32m 14[2mms[22m[39m
+[31m     [31m├ù[31m 9. per-asset isolation ΓÇö independent burst counters between BTC and ETH[39m[32m 8[2mms[22m[39m
+ [31mΓ¥»[39m src/services/BacktestEngine.test.ts [2m([22m[2m6 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 105[2mms[22m[39m
+[31m     [31m├ù[31m simulates long trades using TP before candle close when hit[39m[32m 76[2mms[22m[39m
+ [31mΓ¥»[39m src/services/AdaptiveRiskManager.test.ts [2m([22m[2m5 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 25[2mms[22m[39m
+[31m     [31m├ù[31m rewards diversification when correlations are lower[39m[32m 12[2mms[22m[39m
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ» Failed Tests 25 ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»
+
+ FAIL  src/services/AdaptiveRiskManager.test.ts > AdaptiveRiskManager > rewards diversification when correlations are lower
+AssertionError: expected 1500 to be greater than 1500
+ Γ¥» src/services/AdaptiveRiskManager.test.ts:29:25
+     27|         const highCorr = adaptiveRiskManager.calculatePositionSize(100ΓÇª
+     28|
+     29|         expect(lowCorr).toBeGreaterThan(highCorr);
+       |                         ^
+     30|     });
+     31|
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[1/25]ΓÄ»
+
+ FAIL  src/services/AssetPerformanceMonitor.test.ts > AssetPerformanceMonitor > shouldDisable > should disable when win rate is below threshold after minimum trades
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ Γ¥» src/services/AssetPerformanceMonitor.test.ts:81:57
+     79|       expect(stats!.totalTrades).toBe(20);
+     80|       expect(stats!.winRate).toBeCloseTo(0.25, 1);
+     81|       expect(monitor.shouldDisable('BTC', 'BTC_TREND')).toBe(true);
+       |                                                         ^
+     82|     });
+     83|
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[2/25]ΓÄ»
+
+ FAIL  src/services/AssetPerformanceMonitor.test.ts > AssetPerformanceMonitor > shouldDisable > should disable after 10 consecutive losses
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ Γ¥» src/services/AssetPerformanceMonitor.test.ts:101:57
+     99|       }
+    100|
+    101|       expect(monitor.shouldDisable('BTC', 'BTC_TREND')).toBe(true);
+       |                                                         ^
+    102|     });
+    103|
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[3/25]ΓÄ»
+
+ FAIL  src/services/AssetPerformanceMonitor.test.ts > AssetPerformanceMonitor > shouldDisable > should not re-disable an already disabled strategy
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ Γ¥» src/services/AssetPerformanceMonitor.test.ts:113:57
+    111|       }
+    112|
+    113|       expect(monitor.shouldDisable('BTC', 'BTC_TREND')).toBe(true);
+       |                                                         ^
+    114|       // Should not re-disable once already disabled
+    115|       expect(monitor.shouldDisable('BTC', 'BTC_TREND')).toBe(false);
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[4/25]ΓÄ»
+
+ FAIL  src/services/AssetPerformanceMonitor.test.ts > AssetPerformanceMonitor > shouldReenable > should re-enable a disabled strategy when win rate recovers
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ Γ¥» src/services/AssetPerformanceMonitor.test.ts:129:54
+    127|       }
+    128|
+    129|       expect(monitor.isDisabled('BTC', 'BTC_TREND')).toBe(true);
+       |                                                      ^
+    130|
+    131|       // Now recover: add 20 more trades with 15 wins (75%)
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[5/25]ΓÄ»
+
+ FAIL  src/services/AssetPerformanceMonitor.test.ts > AssetPerformanceMonitor > isDisabled > should return true after automatic disable
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ Γ¥» src/services/AssetPerformanceMonitor.test.ts:162:54
+    160|       }
+    161|
+    162|       expect(monitor.isDisabled('BTC', 'BTC_TREND')).toBe(true);
+       |                                                      ^
+    163|     });
+    164|   });
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[6/25]ΓÄ»
+
+ FAIL  src/services/AssetPerformanceMonitor.test.ts > AssetPerformanceMonitor > getDisabledStrategies > should return all disabled strategies
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ Γ¥» src/services/AssetPerformanceMonitor.test.ts:185:31
+    183|
+    184|       const disabled = monitor.getDisabledStrategies();
+    185|       expect(disabled.length).toBe(1);
+       |                               ^
+    186|       expect(disabled[0].asset).toBe('BTC');
+    187|       expect(disabled[0].strategy).toBe('BTC_TREND');
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[7/25]ΓÄ»
+
+ FAIL  src/services/AssetPerformanceMonitor.test.ts > AssetPerformanceMonitor > reset > should clear all stats and disabled flags
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ Γ¥» src/services/AssetPerformanceMonitor.test.ts:200:54
+    198|       }
+    199|
+    200|       expect(monitor.isDisabled('BTC', 'BTC_TREND')).toBe(true);
+       |                                                      ^
+    201|       expect(monitor.getSnapshot().length).toBeGreaterThan(0);
+    202|
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[8/25]ΓÄ»
+
+ FAIL  src/services/BacktestEngine.test.ts > BacktestEngine > simulates long trades using TP before candle close when hit
+AssertionError: expected 20 to be 10 // Object.is equality
+
+- Expected
++ Received
+
+- 10
++ 20
+
+ Γ¥» src/services/BacktestEngine.test.ts:45:27
+     43|
+     44|         expect(trade.exitPrice).toBe(110);
+     45|         expect(trade.pnl).toBe(10);
+       |                           ^
+     46|     });
+     47|
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[9/25]ΓÄ»
+
+ FAIL  src/services/EventTaxonomyService.test.ts > EventTaxonomyService ΓÇö Day-Bucket Accounting (Option B) > sanitization: snapshots omit bridgeOperation and all internal/sensitive fields
+AssertionError: the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ Γ¥» src/services/EventTaxonomyService.test.ts:714:30
+    712|
+    713|     // Sensitive field stripping in reason string
+    714|     expect(event.reason).not.toContain('Ashjambi@4794');
+       |                              ^
+    715|     expect(event.reason).not.toContain('http://127.0.0.1:3000');
+    716|     expect(event.reason).not.toContain('token=abc123secret');
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[10/25]ΓÄ»
+
+ FAIL  src/services/FullPipelineMultiWinner.e2e.test.ts > FullPipelineMultiWinnerE2E > Scenario: Tail Risk Mode blocks unallowed strategies
+AssertionError: expected [ ΓÇª(6) ] to be undefined
+
+- Expected:
+undefined
+
++ Received:
+[
+  {
+    "asset": "BTC-PERP",
+    "childOrder": {
+      "dispatchMode": "immediate",
+      "executionStyle": "PASSIVE",
+      "intervalMs": 0,
+      "routeHint": "PRIMARY",
+      "scheduledAtOffsetMs": 0,
+      "side": "BUY",
+      "size": 0.11,
+      "sliceIndex": 0,
+      "strategy": "BTC_MEAN_REV",
+      "symbol": "BTC-PERP",
+      "timingPolicy": "sequential_immediate",
+      "totalSlices": 1,
+    },
+    "childOrders": [
+      {
+        "dispatchMode": "immediate",
+        "executionStyle": "PASSIVE",
+        "intervalMs": 0,
+        "routeHint": "PRIMARY",
+        "scheduledAtOffsetMs": 0,
+        "side": "BUY",
+        "size": 0.11,
+        "sliceIndex": 0,
+        "strategy": "BTC_MEAN_REV",
+        "symbol": "BTC-PERP",
+        "timingPolicy": "sequential_immediate",
+        "totalSlices": 1,
+      },
+    ],
+    "compositeDecision": {
+      "adaptiveMemoryContext": {
+        "asset": "UNKNOWN",
+        "direction": "LONG",
+        "executionStyle": "MID",
+        "regime": "LOW_VOLATILITY",
+        "strategy": "UNKNOWN",
+      },
+      "adaptiveMemoryDiagnostics": {
+        "persistentMemorySummary": {
+          "blockedAlphaLost": 0,
+          "blockedAlphaSaved": 0,
+          "calibrationDrift": 0,
+          "count": 0,
+          "decayAdjustedStrategyEdge": 0.45,
+          "executionStylePolicyDiagnostics": undefined,
+          "hasHistory": false,
+          "topRejectedReasons": [],
+        },
+      },
+      "blockedOpportunityPenalty": 0,
+      "compositeScore": 68.1125,
+      "concentrationRisk": "MEDIUM",
+      "crowdingRisk": "HIGH",
+      "executionConfidence": 0.6785,
+      "executionRisk": "MEDIUM",
+      "executionStyleEffectivenessScore": 0.5,
+      "microstructureToxicity": 0,
+      "noTradeReason": undefined,
+      "recommendedExecutionStyle": "MID",
+      "regimeAdjustedConfidence": 0.5,
+      "regimeCompatibility": 0.62,
+      "regimePolicy": "ALLOW",
+      "sizingConfidence": 0.625,
+      "strategyRegimeEdgeScore": 0.45,
+      "tailRiskPenalty": 0,
+    },
+    "concentrationRisk": "MEDIUM",
+    "crowdingRisk": "HIGH",
+    "details": {},
+    "direction": "LONG",
+    "dispatchMode": "immediate",
+    "entry": 50000,
+    "executionAnalytics": {
+      "decisionLatencyMs": null,
+      "delayCost": 0,
+      "executionCost": 0,
+      "fillRatio": 1,
+      "implementationShortfall": 0,
+      "notionalExecuted": 5500,
+      "opportunityCost": null,
+      "slippage": 0,
+      "slippageBps": 0,
+      "strategyRegimeAttribution": "BTC_MEAN_REV:PASSIVE",
+    },
+    "executionHints": {
+      "executionMode": "NORMAL",
+      "executionPenaltyFactor": 1,
+      "reason": "Neutral microstructure",
+      "referencePrice": null,
+      "shouldDelay": false,
+      "shouldSkip": false,
+    },
+    "executionRisk": "MEDIUM",
+    "executionStyle": "PASSIVE",
+    "hunterMode": {
+      "blockers": [
+        "HUNTER_DISABLED",
+        "LOW_SIGNAL_SCORE",
+        "REGIME_NOT_ALLOWED",
+        "EMERGENCY_PROTECTION_ACTIVE",
+      ],
+      "enabled": false,
+      "score": 86,
+    },
+    "id": "mock-BTC_MEAN_REV",
+    "intervalMs": 0,
+    "metadata": {
+      "signalQualityBreakdown": {
+        "baseQualityScore": 85,
+        "executionAdjustment": 0,
+        "finalQualityScore": 85,
+        "regimeAdjustment": 0,
+        "stressAdjustment": 0,
+        "zScoreAdjustment": 0,
+      },
+    },
+    "qualityScore": 85,
+    "quantRiskDiag": {
+      "cvarUsed": null,
+      "decisionCode": "PASS",
+      "realizedVolatilityUsed": null,
+      "reason": undefined,
+      "sizingReason": "unknown",
+      "tailRiskClamp": false,
+    },
+    "reasoning": "Mock Mean Rev | Mocked E2E Signal",
+    "recommendedSize": 0.11,
+    "regimeConflict": false,
+    "routeHint": "PRIMARY",
+    "scheduledAtOffsetMs": 0,
+    "size": 0.11,
+    "sliceIndex": 0,
+    "stopLoss": 49000,
+    "strategy": "BTC_MEAN_REV",
+    "strength": "STRONG",
+    "takeProfit": 51875.00000000001,
+    "timestamp": 1785586380423,
+    "timingPolicy": "sequential_immediate",
+    "totalSlices": 1,
+    "tp1": 50749.99999999999,
+    "tp2": 51875.00000000001,
+  },
+  "mock",
+  5,
+  "ENTRY",
+  0.11,
+  undefined,
+]
+
+ Γ¥» src/services/FullPipelineMultiWinner.e2e.test.ts:673:26
+    671|
+    672|         expect(call1Arg.recommendedSize).toBeCloseTo(0.09, 1);
+    673|         expect(call2Arg).toBeUndefined(); // It was blocked
+       |                          ^
+    674|     });
+    675|
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[11/25]ΓÄ»
+
+ FAIL  src/services/FullPipelineMultiWinner.e2e.test.ts > FullPipelineMultiWinnerE2E > Scenario: ExecutionStyleService assigns PASSIVE style in TAIL_RISK mode
+TypeError: Cannot read properties of undefined (reading '0')
+ Γ¥» src/services/FullPipelineMultiWinner.e2e.test.ts:806:121
+    804|         await orchestrator.executePlan(signals as any, analysis as anyΓÇª
+    805|
+    806|         const call1Arg = vi.mocked(webhookService.sendToWebhook).mock.ΓÇª
+       |                                                                                                                         ^
+    807|
+    808|         expect((call1Arg as any).executionStyle).toBe('PASSIVE');
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[12/25]ΓÄ»
+
+ FAIL  src/services/FullPipelineMultiWinner.e2e.test.ts > FullPipelineMultiWinnerE2E > Scenario: SmartOrderRouterService assigns PRIMARY route for BTC in low vol (HIGH liquidity, AGGRESSIVE)
+TypeError: Cannot read properties of undefined (reading '0')
+ Γ¥» src/services/FullPipelineMultiWinner.e2e.test.ts:832:121
+    830|         await orchestrator.executePlan(signals as any, analysis as anyΓÇª
+    831|
+    832|         const call1Arg = vi.mocked(webhookService.sendToWebhook).mock.ΓÇª
+       |                                                                                                                         ^
+    833|
+    834|         // BTC is heuristically high liquidity. Strong signal -> AGGREΓÇª
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[13/25]ΓÄ»
+
+ FAIL  src/services/FullPipelineMultiWinner.e2e.test.ts > FullPipelineMultiWinnerE2E > Scenario: SmartOrderRouterService assigns SECONDARY route for ALT in low vol (MEDIUM liquidity, AGGRESSIVE)
+TypeError: Cannot read properties of undefined (reading '0')
+ Γ¥» src/services/FullPipelineMultiWinner.e2e.test.ts:861:121
+    859|         await orchestrator.executePlan(signals as any, analysis as anyΓÇª
+    860|
+    861|         const call1Arg = vi.mocked(webhookService.sendToWebhook).mock.ΓÇª
+       |                                                                                                                         ^
+    862|
+    863|         expect((call1Arg as any).executionStyle).toBe('AGGRESSIVE');
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[14/25]ΓÄ»
+
+ FAIL  src/services/FullPipelineMultiWinner.e2e.test.ts > FullPipelineMultiWinnerE2E > Scenario: ExecutionAnalyticsService attaches analytics to trace
+TypeError: Cannot read properties of undefined (reading '0')
+ Γ¥» src/services/FullPipelineMultiWinner.e2e.test.ts:883:121
+    881|         await orchestrator.executePlan(signals as any, analysis as anyΓÇª
+    882|
+    883|         const call1Arg = vi.mocked(webhookService.sendToWebhook).mock.ΓÇª
+       |                                                                                                                         ^
+    884|
+    885|         expect((call1Arg as any).executionAnalytics).toBeDefined();
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[15/25]ΓÄ»
+
+ FAIL  src/services/FullPipelineMultiWinner.e2e.test.ts > FullPipelineMultiWinnerE2E > Scenario: ChildOrderSchedulerService attaches childOrders to trace
+TypeError: Cannot read properties of undefined (reading '0')
+ Γ¥» src/services/FullPipelineMultiWinner.e2e.test.ts:906:121
+    904|         await orchestrator.executePlan(signals as any, analysis as anyΓÇª
+    905|
+    906|         const call1Arg = vi.mocked(webhookService.sendToWebhook).mock.ΓÇª
+       |                                                                                                                         ^
+    907|
+    908|         expect((call1Arg as any).childOrder).toBeDefined();
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[16/25]ΓÄ»
+
+ FAIL  src/services/FullPipelineMultiWinner.e2e.test.ts > FullPipelineMultiWinnerE2E > Scenario: ExecutionTcaAggregatorService attaches parentTcaSummary to trace
+AssertionError: expected undefined to be defined
+ Γ¥» src/services/FullPipelineMultiWinner.e2e.test.ts:935:34
+    933|
+    934|         const parentTcaSummary = (trace?.executionDecision as any).parΓÇª
+    935|         expect(parentTcaSummary).toBeDefined();
+       |                                  ^
+    936|         expect(parentTcaSummary.totalRequestedSize).toBeGreaterThan(0);
+    937|         expect(parentTcaSummary.totalExecutedSize).toBe(parentTcaSummaΓÇª
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[17/25]ΓÄ»
+
+ FAIL  src/services/FullPipelineMultiWinner.e2e.test.ts > FullPipelineMultiWinnerE2E > Scenario: ExecutionQualityMonitorService attaches alerts to trace
+AssertionError: expected undefined to be defined
+ Γ¥» src/services/FullPipelineMultiWinner.e2e.test.ts:972:24
+    970|
+    971|         const status = (trace?.executionDecision as any).executionQualΓÇª
+    972|         expect(status).toBeDefined();
+       |                        ^
+    973|         expect(['ok', 'warning', 'critical']).toContain(status);
+    974|
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[18/25]ΓÄ»
+
+ FAIL  src/services/FullPipelineMultiWinner.e2e.test.ts > FullPipelineMultiWinnerE2E > Scenario: PostTradeExecutionReportService attaches report to trace
+AssertionError: expected undefined to be defined
+ Γ¥» src/services/FullPipelineMultiWinner.e2e.test.ts:1000:24
+    998|
+    999|         const report = (trace?.executionDecision as any).postTradeExecΓÇª
+    1000|         expect(report).toBeDefined();
+       |                        ^
+    1001|         expect(report.reportVersion).toBe('1.0');
+    1002|         expect(Array.isArray(report.children)).toBe(true);
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[19/25]ΓÄ»
+
+ FAIL  src/services/ParallelWinnerExecution.e2e.test.ts > Parallel Winner Execution E2E > Scenario 3: Parallel winner blocked by trading control
+AssertionError: expected undefined to be 'TRADING_CONTROL' // Object.is equality
+
+- Expected:
+"TRADING_CONTROL"
+
++ Received:
+undefined
+
+ Γ¥» src/services/ParallelWinnerExecution.e2e.test.ts:165:56
+    163|
+    164|         const trace = executionDecisionTraceService.getLatestSnapshot(ΓÇª
+    165|         expect(trace?.executionDecision?.blockedStage).toBe('TRADING_CΓÇª
+       |                                                        ^
+    166|         expect(trace?.executionDecision?.reason).toBe('Simulated ManuaΓÇª
+    167|     });
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[20/25]ΓÄ»
+
+ FAIL  src/services/ParallelWinnerExecution.e2e.test.ts > Parallel Winner Execution E2E > Scenario 4: Parallel winner blocked by pre-trade
+AssertionError: expected 'RISK_BLOCKED' to be 'PRE_TRADE' // Object.is equality
+
+Expected: "PRE_TRADE"
+Received: "RISK_BLOCKED"
+
+ Γ¥» src/services/ParallelWinnerExecution.e2e.test.ts:187:56
+    185|
+    186|         const trace = executionDecisionTraceService.getLatestSnapshot(ΓÇª
+    187|         expect(trace?.executionDecision?.blockedStage).toBe('PRE_TRADEΓÇª
+       |                                                        ^
+    188|         expect(trace?.executionDecision?.reason).toBe('High volatilityΓÇª
+    189|     });
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[21/25]ΓÄ»
+
+ FAIL  src/services/TradingControlService.test.ts > TradingControlService > 2. manual kill switch forces BLOCKED mode
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ Γ¥» src/services/TradingControlService.test.ts:22:34
+     20|         const snap = tradingControlService.getSnapshot();
+     21|         expect(snap.manualKillSwitch).toBe(true);
+     22|         expect(snap.autoBlocked).toBe(true);
+       |                                  ^
+     23|         expect(snap.lastBlockReason).toContain('Kill Switch');
+     24|
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[22/25]ΓÄ»
+
+ FAIL  src/services/TradingControlService.test.ts > TradingControlService > 3. triggers auto cooldown after max skip bursts
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ Γ¥» src/services/TradingControlService.test.ts:38:37
+     36|
+     37|         const snap = tradingControlService.getSnapshot();
+     38|         expect(snap.cooldownActive).toBe(true);
+       |                                     ^
+     39|         expect(snap.cooldownUntil).not.toBeNull();
+     40|         expect(snap.autoBlocked).toBe(true);
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[23/25]ΓÄ»
+
+ FAIL  src/services/TradingControlService.test.ts > TradingControlService > 5. auto expiry of cooldown
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ Γ¥» src/services/TradingControlService.test.ts:65:68
+     63|
+     64|         expect(tradingControlService.evaluateControlState()).toBe('BLOΓÇª
+     65|         expect(tradingControlService.getSnapshot().cooldownActive).toBΓÇª
+       |                                                                    ^
+     66|
+     67|         // Fast forward 5 minutes and 1 second
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[24/25]ΓÄ»
+
+ FAIL  src/services/TradingControlService.test.ts > TradingControlService > 9. per-asset isolation ΓÇö independent burst counters between BTC and ETH
+AssertionError: expected 'NORMAL' to be 'BLOCKED' // Object.is equality
+
+Expected: "BLOCKED"
+Received: "NORMAL"
+
+ Γ¥» src/services/TradingControlService.test.ts:126:67
+    124|         // Add 1 more degraded data to BTC (3 total) ΓåÆ BLOCKED
+    125|         tradingControlService.recordDegradedData('BTC');
+    126|         expect(tradingControlService.evaluateControlState('BTC')).toBeΓÇª
+       |                                                                   ^
+    127|
+    128|         // ETH still only has 1 execution skip ΓåÆ NORMAL
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[25/25]ΓÄ»
+
+
+[2m Test Files [22m [1m[31m7 failed[39m[22m[2m | [22m[1m[32m48 passed[39m[22m[90m (55)[39m
+[2m      Tests [22m [1m[31m25 failed[39m[22m[2m | [22m[1m[32m327 passed[39m[22m[90m (352)[39m
+[2m   Start at [22m 15:12:49
+[2m   Duration [22m 49.95s[2m (transform 39.11s, setup 0ms, import 141.04s, tests 4.33s, environment 80ms)[22m
+

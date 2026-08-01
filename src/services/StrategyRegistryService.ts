@@ -29,6 +29,10 @@ export class StrategyRegistryService {
 
         this.register({ strategyId: 'VOLATILITY_BREAKOUT', style: 'Volatility Breakout', assetScope: ['BTC-PERPETUAL', 'ETH-PERPETUAL'], enabled: true, priorityWeight: 1, thematicGroup: 'Breakout' });
         this.register({ strategyId: 'COINTEGRATION', style: 'Statistical Arbitrage', assetScope: ['BTC-PERPETUAL', 'ETH-PERPETUAL'], enabled: true, priorityWeight: 1, thematicGroup: 'Arbitrage' });
+        this.register({ strategyId: 'MEAN_REVERSION_ALPHA', style: 'Mean Reversion', assetScope: ['BTC-PERPETUAL', 'ETH-PERPETUAL'], enabled: true, priorityWeight: 1, thematicGroup: 'Mean Reversion' });
+        this.register({ strategyId: 'BREAKOUT_CAPTURE', style: 'Breakout Capture', assetScope: ['BTC-PERPETUAL', 'ETH-PERPETUAL'], enabled: true, priorityWeight: 1, thematicGroup: 'Breakout' });
+        this.register({ strategyId: 'ARBITRAGE_SCANNER', style: 'Arbitrage Scanner', assetScope: ['BTC-PERPETUAL', 'ETH-PERPETUAL'], enabled: true, priorityWeight: 1, thematicGroup: 'Arbitrage' });
+        this.register({ strategyId: 'GRID_TRADING', style: 'Grid Trading', assetScope: ['BTC-PERPETUAL', 'ETH-PERPETUAL'], enabled: true, priorityWeight: 1, thematicGroup: 'Range' });
         this.register({ strategyId: 'NEWS_SHOCK', style: 'Event Driven', assetScope: ['BTC-PERPETUAL', 'ETH-PERPETUAL'], enabled: false, priorityWeight: 1, thematicGroup: 'News' });
     }
 

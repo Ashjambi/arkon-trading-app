@@ -1,6 +1,7 @@
 import { logStructured } from '../utils/logger';
 import { tradingControlService } from './TradingControlService';
 import { riskLimitsService } from './RiskLimitsService';
+import { crossAssetCorrelationService } from './CrossAssetCorrelationService';
 
 export type PreTradeRiskSnapshot = {
   maxNotionalPerOrder: number;
@@ -22,6 +23,8 @@ export type PreTradeRiskSnapshot = {
     | 'BLOCKED_STALE_DATA'
     | 'BLOCKED_CONTROL_LAYER'
     | 'BLOCKED_EXPOSURE'
+    | 'BLOCKED_TAIL_RISK'
+    | 'BLOCKED_CORRELATION'
     | null;
 
   lastReason: string | null;
@@ -37,10 +40,14 @@ export interface OrderCandidate {
     referencePrice: number;
     timestamp: number;
     isRiskReducing?: boolean;
+    tailRiskClamp?: boolean;
+    cvarUsed?: number;
+    realizedVolatilityUsed?: number;
 }
 
 export interface RiskContext {
     lastMarketDataTs: number | null;
+    existingPositions?: Array<{ asset: string; direction: string; size: number }>;
 }
 
 export interface RiskGuardResult {
@@ -76,10 +83,10 @@ export class PreTradeRiskGuard {
         const now = Date.now();
         this.snapshot.lastCheckedAt = new Date(now).toISOString();
 
-        // 5) TradingControlService check
-        const controlState = tradingControlService.evaluateControlState();
+        // 5) TradingControlService check (per-asset context)
+        const controlState = tradingControlService.evaluateControlState(candidate.symbol);
         if (controlState === 'BLOCKED') {
-            return this.reject('BLOCKED_CONTROL_LAYER', 'TradingControlService reports BLOCKED state');
+            return this.reject('BLOCKED_CONTROL_LAYER', `TradingControlService reports BLOCKED state for ${candidate.symbol}`);
         }
 
         // 4) Stale Market Data
@@ -118,6 +125,26 @@ export class PreTradeRiskGuard {
         }
 
         
+        if (candidate.tailRiskClamp) {
+            return this.reject('BLOCKED_TAIL_RISK', `Quantitative tail-risk clamp triggered (CVaR=${(candidate.cvarUsed ?? 0).toFixed(3)}, RV=${(candidate.realizedVolatilityUsed ?? 0).toFixed(3)})`);
+        }
+
+        // 6) Cross-Asset Correlation Check
+        // If existing positions in other assets are highly correlated (|corr| > 0.95)
+        // in the same direction, block the trade to prevent risk stacking.
+        if (!candidate.isRiskReducing && context.existingPositions && context.existingPositions.length > 0) {
+            const candidateSide = candidate.side === 'BUY' || candidate.side === 'ENTRY' || candidate.side === 'LONG' ? 'LONG' : 'SHORT';
+            const blockResult = crossAssetCorrelationService.shouldBlockForCorrelation(
+                candidate.symbol,
+                candidateSide,
+                context.existingPositions,
+                60
+            );
+            if (blockResult.blocked) {
+                return this.reject('BLOCKED_CORRELATION', blockResult.reason || 'Extreme cross-asset correlation detected');
+            }
+        }
+
         // Exposure Limits Check (Only for ENTRY orders)
         if (!candidate.isRiskReducing) {
             const limitsResult = riskLimitsService.isEntryAllowed(candidate.symbol, candidate.notional, candidate.size);

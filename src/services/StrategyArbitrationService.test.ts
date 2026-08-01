@@ -18,12 +18,12 @@ describe('StrategyArbitrationService', () => {
         (diagnosticsService as any).snapshot.counters.selectedByStrategy = {};
     });
 
-    const baseSignal = (id: string, strategy: string, asset: string, direction: 'LONG' as any | 'SHORT', qualityScore: number): TradingSignal => ({
+    const baseSignal = (id: string, strategy: string, asset: string, direction: 'LONG' | 'SHORT', qualityScore: number): TradingSignal => ({
         id,
         timestamp: Date.now(),
         asset,
-        direction,
-        strength: 50,
+        direction: direction as any,
+        strength: 50 as any,
         entry: 100,
         stopLoss: 90,
         takeProfit: 120,
@@ -31,7 +31,8 @@ describe('StrategyArbitrationService', () => {
         tp2: 120,
         qualityScore,
         reasoning: '',
-        strategy: strategy as any
+        strategy: strategy as any,
+        details: {} as any
     });
 
     it('1. Conflicting opposite-direction same-asset signals => stronger one selected', () => {

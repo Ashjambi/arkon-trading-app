@@ -9,6 +9,7 @@ export type CoordinationTraceSnapshot = {
   overlayDecisions: OverlayDecision[];
   arbitrationResult: ArbitrationResult;
   finalSignals: TradingSignal[];
+    hunterModeDecision?: any;
 };
 
 class CoordinationTraceService {
@@ -34,6 +35,11 @@ class CoordinationTraceService {
 
     public getLatestSnapshot(): CoordinationTraceSnapshot | null {
         return this.latestSnapshot;
+    }
+
+    public recordHunterModeDecision(decision: any) {
+        if (!this.latestSnapshot) return;
+        this.latestSnapshot.hunterModeDecision = JSON.parse(JSON.stringify(decision));
     }
 }
 

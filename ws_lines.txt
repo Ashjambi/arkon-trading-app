@@ -1,0 +1,7 @@
+1210:           market_data,
+1215:           market_quotes || quotes || symbol_prices || prices || market_data || ticks
+1760:         if (msg.type === 'SUBSCRIBE_MARKET_DATA') {
+1780:         } else if (msg.type === 'UNSUBSCRIBE_MARKET_DATA') {
+1786:         } else if (msg.type === 'SUBSCRIBE_BRIDGE_STATE') {
+1794:               type: 'BRIDGE_STATE',
+1804:           ws.send(JSON.stringify({ type: 'BRIDGE_STATE_SUBSCRIBED' }));

@@ -36,7 +36,15 @@ class MultiStrategySignalCoordinatorService {
             executionDecisionTraceService.initTrace(finalSignals[0], true);
         } else if (signals.length > 0) {
             executionDecisionTraceService.initTrace(signals[0], true);
-            executionDecisionTraceService.recordBlock('COORDINATION', 'Signal blocked by risk overlay or arbitration');
+            // This is a coordination-level signal filter (no eligible strategy/allocation candidate),
+            // not a risk block. Use SIGNAL_FILTERED taxonomy.
+            executionDecisionTraceService.recordSignalFiltered({
+                reasonCode: 'COORDINATION',
+                reason: 'Signal blocked by risk overlay or arbitration',
+                asset: signals[0]?.asset || 'UNKNOWN',
+                strategy: signals[0]?.strategy || 'UNKNOWN',
+                filterType: 'COORDINATION',
+            });
         }
 
         return {

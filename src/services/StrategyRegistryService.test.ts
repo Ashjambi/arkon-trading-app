@@ -23,7 +23,20 @@ describe('StrategyRegistryService', () => {
         expect(meta?.style).toBe('Statistical Arbitrage');
     });
 
-    it('4. returns null for missing strategy', () => {
+    it('4. includes new stage-2 strategies in registry', () => {
+        const meanRev = strategyRegistryService.getStrategyMeta('MEAN_REVERSION_ALPHA');
+        const breakout = strategyRegistryService.getStrategyMeta('BREAKOUT_CAPTURE');
+        const arb = strategyRegistryService.getStrategyMeta('ARBITRAGE_SCANNER');
+        const grid = strategyRegistryService.getStrategyMeta('GRID_TRADING');
+
+        expect(meanRev).not.toBeNull();
+        expect(meanRev?.thematicGroup).toBe('Mean Reversion');
+        expect(breakout).not.toBeNull();
+        expect(arb).not.toBeNull();
+        expect(grid).not.toBeNull();
+    });
+
+    it('5. returns null for missing strategy', () => {
         const meta = strategyRegistryService.getStrategyMeta('UNKNOWN');
         expect(meta).toBeNull();
     });

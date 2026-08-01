@@ -74,7 +74,7 @@ export const generateSignal = (
   optionsVolume: number,
   config: AppConfig,
   recentTrades: Trade[] = [],
-): { signal: TradingSignal | null; analysis: MarketAnalysisState } => {
+): { signals: TradingSignal[]; signal: TradingSignal | null; analysis: MarketAnalysisState } => {
 
   const price = summary.last || 0;
   
@@ -86,7 +86,7 @@ export const generateSignal = (
   diagnosticsService.recordMarketDataHealth(summary.instrument_name, hasOrderBook, recentTrades.length > 0, isDegraded);
   
   if (isDegraded && !config.hunterMode) {
-      tradingControlService.recordDegradedData();
+      tradingControlService.recordDegradedData(summary.instrument_name || asset);
   }
 
 
@@ -107,8 +107,9 @@ export const generateSignal = (
       candlesCount: m15Closes.length,
       reason: 'INSUFFICIENT_DATA_SERIES'
     });
-    return {
+return {
       signal: null,
+      signals: [],
       analysis: {
         asset: summary.instrument_name,
         price,
@@ -500,9 +501,6 @@ export const generateSignal = (
 
   // Global Active Gates Helper functions to synchronize Quality Score with the visual gates in UI
   const checkGatePassed = (gateId: string, s: MarketAnalysisState, c: AppConfig): boolean => {
-    // If evaluating a BTC asset, we use highly permissive values to ensure extremely high trade frequency and avoid any gate penalties
-    const isBTC = s.asset.startsWith("BTC");
-
     let val = 0;
     let thr = 0;
     let invert = false;
@@ -510,33 +508,33 @@ export const generateSignal = (
     switch (gateId) {
       case 'hurst':
         val = s.hurst;
-        thr = isBTC ? 0.99 : c.hurst;
+        thr = c.hurst;
         invert = true;
         break;
       case 'fisher':
         val = Math.abs(s.fisher);
-        thr = isBTC ? 0.05 : c.fisher;
+        thr = c.fisher;
         break;
       case 'vwapZScore':
         val = Math.abs(s.vwapZScore);
-        thr = isBTC ? 0.05 : c.vwapZScore;
+        thr = c.vwapZScore;
         invert = false;
         break;
       case 'rSquared':
         val = s.rSquared;
-        thr = isBTC ? 0.01 : c.rSquared;
+        thr = c.rSquared;
         break;
       case 'dvol':
         val = s.dvol;
-        thr = isBTC ? 5 : c.dvol;
+        thr = c.dvol;
         break;
       case 'ofi':
         val = Math.abs(s.liquidityGap);
-        thr = isBTC ? 0.01 : c.ofi;
+        thr = c.ofi;
         break;
       case 'volRatio':
         val = s.volRatio;
-        thr = isBTC ? 0.1 : c.volRatio;
+        thr = c.volRatio;
         break;
       default:
         return true;
@@ -767,13 +765,37 @@ export const generateSignal = (
 
   if (signals.length > 0) {
       signals.forEach(sig => {
-            const profitTargetPercent = 0.02; // 2%
+            // Strategy-specific TP targets based on strategy type
+            // Scalper: tight TP (0.5-0.8%) — quick entries, high frequency
+            // Mean Reversion: moderate TP (1-2%) — revert to VWAP/mean
+            // Trend/Breakout: wide TP (3-6%) — capture directional moves
+            let profitTargetPercent = 0.02; // default 2%
+            
+            const stratName = (sig.strategy || '').toUpperCase();
+            if (stratName.includes('SCALPER') || stratName.includes('OFI')) {
+              profitTargetPercent = 0.006; // 0.6% for scalpers — tight, fast
+            } else if (stratName.includes('MEAN_REV') || stratName.includes('AVR')) {
+              profitTargetPercent = 0.015; // 1.5% for mean reversion
+            } else if (stratName.includes('BREAK') || stratName.includes('VOLATILITY')) {
+              profitTargetPercent = 0.04; // 4% for breakout/volatility
+            } else if (stratName.includes('TREND')) {
+              profitTargetPercent = 0.035; // 3.5% for trend following
+            } else if (stratName.includes('COINTEGRATION') || stratName.includes('PAIRS')) {
+              profitTargetPercent = 0.025; // 2.5% for pairs trading
+            } else if (stratName.includes('NEWS') || stratName.includes('SHOCK')) {
+              profitTargetPercent = 0.05; // 5% for news shocks (wide moves)
+            }
+            
             const targetTp1 = sig.direction === SignalDirection.LONG 
                  ? price * (1 + profitTargetPercent) 
                  : price * (1 - profitTargetPercent);
-            sig.stopLoss = 0; 
+            sig.stopLoss = sig.stopLoss || 0; // Keep dynamic SL from ScoringUtils if set
             sig.tp1 = targetTp1;
-            sig.takeProfit = sig.direction === SignalDirection.LONG ? price * 1.06 : price * 0.94; 
+            // Final TP is 2x the partial TP for full position targets
+            const finalMultiplier = profitTargetPercent * 2.5;
+            sig.takeProfit = sig.direction === SignalDirection.LONG 
+              ? price * (1 + finalMultiplier) 
+              : price * (1 - finalMultiplier); 
             sig.tp2 = sig.takeProfit;
             
             if (sig.recommendedSize !== undefined) {
@@ -813,48 +835,33 @@ export const generateSignal = (
   }
   
   if (signal) {
-      // تنفيذ اتفاق إدارة الصفقات: // keep the original for signal var just in case
-      // 1. Partial Close: 50%
-      // 2. TP1: 2% profit target
+      // Strategy-specific TP targets
+      let profitTargetPercent = 0.02; // default 2%
+      const stratName = (signal.strategy || '').toUpperCase();
+      if (stratName.includes('SCALPER') || stratName.includes('OFI')) {
+        profitTargetPercent = 0.006;
+      } else if (stratName.includes('MEAN_REV') || stratName.includes('AVR')) {
+        profitTargetPercent = 0.015;
+      } else if (stratName.includes('BREAK') || stratName.includes('VOLATILITY')) {
+        profitTargetPercent = 0.04;
+      } else if (stratName.includes('TREND')) {
+        profitTargetPercent = 0.035;
+      } else if (stratName.includes('COINTEGRATION') || stratName.includes('PAIRS')) {
+        profitTargetPercent = 0.025;
+      } else if (stratName.includes('NEWS') || stratName.includes('SHOCK')) {
+        profitTargetPercent = 0.05;
+      }
       
-      const profitTargetPercent = 0.02; // 2%
       const targetTp1 = direction === SignalDirection.LONG 
           ? price * (1 + profitTargetPercent) 
           : price * (1 - profitTargetPercent);
 
-      signal.stopLoss = 0; // تم إيقاف الستوب لوز الفردي للاعتماد الكلي على محفظة التعافي والميزانية (CRL)
-      signal.tp1 = targetTp1; // هدف الأمان الأول (2%)
-      signal.takeProfit = direction === SignalDirection.LONG ? price * 1.06 : price * 0.94; // هدف نهائي بعيد (للترند)
+      signal.stopLoss = signal.stopLoss || 0; // Keep dynamic SL if set
+      signal.tp1 = targetTp1; // هدف الأمان حسب الاستراتيجية
+      const finalMultiplier = profitTargetPercent * 2.5;
+      signal.takeProfit = direction === SignalDirection.LONG ? price * (1 + finalMultiplier) : price * (1 - finalMultiplier);
       signal.tp2 = signal.takeProfit; // الهدف النهائي
-      
-      // تأكيد إعدادات الإغلاق الجزئي للميتاتريدر
-      // هذه القيم تُرسل ضمن الـ payload وتُستخدم في الـ Bridge
   }
-
-
-
-      // Execution Quality Layer
-      if (false && signal && signal.recommendedSize !== undefined) {
-          const execInput: ExecutionQualityInput = {
-              asset: signal.asset,
-              direction: signal.direction,
-              recommendedSize: signal.recommendedSize,
-              orderBookImbalance: partialState.orderBookImbalance,
-              microPrice: partialState.microPrice,
-              microPriceDeviation: partialState.microPriceDeviation,
-              topLevelImbalance: partialState.topLevelImbalance,
-              depthPressure: partialState.depthPressure,
-              normalizedOfi: partialState.normalizedOfi,
-              toxicityMetric: partialState.toxicityMetric,
-              volatilityProxy: partialState.volRatio,
-              regime: partialState.regime,
-              hunterMode: !!config.hunterMode
-          };
-
-          const execOutput = executionQualityEngine.evaluate(execInput);
-          signal.executionHints = execOutput;
-      }
-
 
   // DIAGNOSTICS: Record Signal Evaluation
   diagnosticsService.recordSignalEvaluated(

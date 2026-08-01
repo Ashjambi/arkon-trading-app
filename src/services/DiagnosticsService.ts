@@ -14,6 +14,9 @@ export interface TradingDiagnosticsSnapshot {
     lastSignalAccepted: boolean | null;
     lastExecutionMode: 'NORMAL' | 'PASSIVE' | 'PRICE_IMPROVED' | 'DELAYED' | 'SKIP' | null;
     lastRecommendedSize: number | null;
+        lastHunterScore?: number | null;
+        lastHunterEnabled?: boolean | null;
+        lastHunterReasons?: string[];
   };
   counters: {
     preTradeBlockedTotal: number;
@@ -34,6 +37,11 @@ export interface TradingDiagnosticsSnapshot {
     coordinationRuns: number;
     coordinationInputSignals: number;
     coordinationFinalSignals: number;
+        hunterEvaluated: number;
+        hunterEnabled: number;
+        hunterRejected: number;
+        hunterTradesExecuted: number;
+        hunterRejectedByReason: Record<string, number>;
   };
 }
 
@@ -57,6 +65,9 @@ class DiagnosticsService {
                 lastSignalAccepted: null,
                 lastExecutionMode: null,
                 lastRecommendedSize: null,
+                lastHunterScore: null,
+                lastHunterEnabled: null,
+                lastHunterReasons: [],
             },
             counters: {
                 preTradeBlockedTotal: 0,
@@ -77,11 +88,29 @@ class DiagnosticsService {
                 coordinationRuns: 0,
                 coordinationInputSignals: 0,
                 coordinationFinalSignals: 0,
+                hunterEvaluated: 0,
+                hunterEnabled: 0,
+                hunterRejected: 0,
+                hunterTradesExecuted: 0,
+                hunterRejectedByReason: {},
             }
         };
     }
 
+    private ensureHunterCounters() {
+        const counters: any = this.snapshot.counters as any;
+        if (typeof counters.hunterEvaluated !== 'number') counters.hunterEvaluated = 0;
+        if (typeof counters.hunterEnabled !== 'number') counters.hunterEnabled = 0;
+        if (typeof counters.hunterRejected !== 'number') counters.hunterRejected = 0;
+        if (typeof counters.hunterTradesExecuted !== 'number') counters.hunterTradesExecuted = 0;
+        if (!counters.hunterRejectedByReason) counters.hunterRejectedByReason = {};
+        if (!this.snapshot.signalFlow.lastHunterReasons) this.snapshot.signalFlow.lastHunterReasons = [];
+        if (this.snapshot.signalFlow.lastHunterScore === undefined) this.snapshot.signalFlow.lastHunterScore = null;
+        if (this.snapshot.signalFlow.lastHunterEnabled === undefined) this.snapshot.signalFlow.lastHunterEnabled = null;
+    }
+
     public getSnapshot(): TradingDiagnosticsSnapshot {
+        this.ensureHunterCounters();
         this.snapshot.timestampUtc = new Date().toISOString();
         return JSON.parse(JSON.stringify(this.snapshot));
     }
@@ -203,6 +232,31 @@ class DiagnosticsService {
         this.snapshot.counters.coordinationRuns++;
         this.snapshot.counters.coordinationInputSignals += inputCount;
         this.snapshot.counters.coordinationFinalSignals += finalCount;
+    }
+
+    public recordHunterDecision(enabled: boolean, score: number, reasons: string[], blockers: string[]) {
+        this.ensureHunterCounters();
+        this.snapshot.counters.hunterEvaluated++;
+        this.snapshot.signalFlow.lastHunterScore = score;
+        this.snapshot.signalFlow.lastHunterEnabled = enabled;
+        this.snapshot.signalFlow.lastHunterReasons = [...(enabled ? reasons : blockers)].slice(0, 6);
+
+        if (enabled) {
+            this.snapshot.counters.hunterEnabled++;
+        } else {
+            this.snapshot.counters.hunterRejected++;
+            for (const blocker of blockers) {
+                if (!this.snapshot.counters.hunterRejectedByReason[blocker]) {
+                    this.snapshot.counters.hunterRejectedByReason[blocker] = 0;
+                }
+                this.snapshot.counters.hunterRejectedByReason[blocker]++;
+            }
+        }
+    }
+
+    public recordHunterTradeExecuted() {
+        this.ensureHunterCounters();
+        this.snapshot.counters.hunterTradesExecuted++;
     }
 }
 export const diagnosticsService = new DiagnosticsService();

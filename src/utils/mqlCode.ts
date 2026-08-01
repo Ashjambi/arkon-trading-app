@@ -1,10 +1,10 @@
 export const getMQL5Code = (webhookUrl: string, webhookSecret: string, maxOpenTrades: number = 100) => `//+------------------------------------------------------------------+
-//|                                                    Arkon50EA.mq5 |
+//|                                                    Arkon51EA.mq5 |
 //|                                      Copyright 2026, Arkon Quant |
 //+------------------------------------------------------------------+
 #property copyright "Arkon Quant"
 #property link      "https://arkon.quant"
-#property version   "50.00"
+#property version   "51.00"
 
 #include <Trade\\Trade.mqh>
 
@@ -27,11 +27,84 @@ input int         CRLMinAgeHours           = 48;       // Minimum age (in hours)
 input bool        ResetPersistentBaseline  = false;    // Reset saved baseline to 0 on startup
 
 //--- GLOBAL STATE VARIABLES
+
 struct TrailingState {
     ulong ticket;
     double maxProfit;
 };
 TrailingState g_trailingStates[2000];
+
+struct PositionManagerState {
+    ulong ticket;
+    double entryPrice;
+    double entryRV;
+    double entryTime;
+    double rvTrailDistance;
+    bool initialized;
+};
+PositionManagerState g_positionManager[2000];
+
+void RegisterPositionManagerState(ulong ticket, double entryPrice, double entryRV, double rvTrailDistance) {
+    for(int i = 0; i < 2000; i++) {
+        if(g_positionManager[i].ticket == ticket) {
+            g_positionManager[i].entryPrice = entryPrice;
+            g_positionManager[i].entryRV = entryRV;
+            g_positionManager[i].entryTime = (double)TimeCurrent();
+            g_positionManager[i].rvTrailDistance = rvTrailDistance;
+            g_positionManager[i].initialized = true;
+            return;
+        }
+        if(g_positionManager[i].ticket == 0) {
+            g_positionManager[i].ticket = ticket;
+            g_positionManager[i].entryPrice = entryPrice;
+            g_positionManager[i].entryRV = entryRV;
+            g_positionManager[i].entryTime = (double)TimeCurrent();
+            g_positionManager[i].rvTrailDistance = rvTrailDistance;
+            g_positionManager[i].initialized = true;
+            return;
+        }
+    }
+}
+
+void UpdatePositionManagerState(ulong ticket, double currentPrice) {
+    for(int i = 0; i < 2000; i++) {
+        if(g_positionManager[i].ticket != ticket) continue;
+        if(!g_positionManager[i].initialized) continue;
+        double move = MathAbs(currentPrice - g_positionManager[i].entryPrice);
+        double rvTrail = MathMax(0.0, g_positionManager[i].entryRV * 4.0);
+        if(move >= rvTrail) {
+            g_positionManager[i].rvTrailDistance = rvTrail;
+        }
+        break;
+    }
+}
+
+void ApplyPositionManagerLogic(ulong ticket, string symbol) {
+    if(ticket == 0) return;
+    if(!PositionSelectByTicket(ticket)) return;
+    long type = PositionGetInteger(POSITION_TYPE);
+    double entryPrice = PositionGetDouble(POSITION_PRICE_OPEN);
+    double currentPrice = PositionGetDouble(POSITION_PRICE_CURRENT);
+    double volume = PositionGetDouble(POSITION_VOLUME);
+    double rv = MathMax(0.0001, MathAbs(SymbolInfoDouble(symbol, SYMBOL_POINT)) * 4.0);
+    if(type == POSITION_TYPE_BUY) {
+        double rMultiple = (currentPrice - entryPrice) / MathMax(rv, 0.0001);
+        if(rMultiple >= 1.0 && volume > 0.0) {
+            double partialVolume = MathMax(0.01, volume * 0.5);
+            if(!trade.PositionClosePartial(ticket, partialVolume)) {
+                trade.PositionClose(ticket);
+            }
+        }
+    } else {
+        double rMultiple = (entryPrice - currentPrice) / MathMax(rv, 0.0001);
+        if(rMultiple >= 1.0 && volume > 0.0) {
+            double partialVolume = MathMax(0.01, volume * 0.5);
+            if(!trade.PositionClosePartial(ticket, partialVolume)) {
+                trade.PositionClose(ticket);
+            }
+        }
+    }
+}
 
 void UpdateMaxProfit(ulong ticket, double currentProfit) {
     for(int i = 0; i < 2000; i++) {
@@ -79,9 +152,10 @@ bool g_BaselineInitialized = false;     // Tracks whether baseline has been load
 double g_CapitalReleased = 0.0;
 double g_MarginSaved = 0.0;
 int g_TotalCompressionCycles = 0;
+string g_LocalBridgeURL = "http://127.0.0.1:3000";
 
 int OnInit() {
-    g_WebhookURL = WebhookURL;
+    g_WebhookURL = g_LocalBridgeURL;
     StringTrimLeft(g_WebhookURL);
     StringTrimRight(g_WebhookURL);
     if(StringSubstr(g_WebhookURL, StringLen(g_WebhookURL)-1, 1) == "/") g_WebhookURL = StringSubstr(g_WebhookURL, 0, StringLen(g_WebhookURL)-1);
@@ -92,8 +166,9 @@ int OnInit() {
 
     MathSrand(GetTickCount());
     EventSetMillisecondTimer(PollingIntervalMs);
+    Print("Bridge URL locked to local endpoint: ", g_WebhookURL);
     Print("==========================================================");
-    Print("ARKON EA Initialized. VERSION 50.00 (NATIVE 0.50$ TP)");
+    Print("ARKON EA Initialized. VERSION 51.00 (NATIVE 0.50$ TP)");
     Print("Target USD TP configured at: $" + DoubleToString(TargetDollarProfit, 2));
     Print("==========================================================");
     return(INIT_SUCCEEDED);
@@ -722,11 +797,12 @@ void SendState() {
     
     char post[], result[]; string result_headers;
     string url = g_WebhookURL + "/api/mt5/sync";
-    string headers = "Content-Type: application/json\\r\\nUser-Agent: MetaTrader 5\\r\\n";
+    string headers = "Content-Type: application/json\\r\\nAuthorization: Bearer " + WebhookSecret + "\\r\\nUser-Agent: MetaTrader 5\\r\\n\\r\\n";
     double diff = g_CurrentClosedProfit - g_AccumulatedClosedProfit;
     double budgetEst = (diff > 0) ? (diff * (CRLProfitAllocationPct / 100.0)) : 0.0;
     double accountEquity = AccountInfoDouble(ACCOUNT_EQUITY);
-    string payload = "{\\\"positions\\\":" + positionsJson + ",\\\"crl_baseline\\\":" + DoubleToString(g_AccumulatedClosedProfit, 2) + ",\\\"crl_current\\\":" + DoubleToString(g_CurrentClosedProfit, 2) + ",\\\"crl_diff\\\":" + DoubleToString(diff, 2) + ",\\\"crl_budget\\\":" + DoubleToString(budgetEst, 2) + ",\\\"crl_threshold\\\":" + DoubleToString(CRLIncrementThreshold, 2) + ",\\\"equity\\\":" + DoubleToString(accountEquity, 2) + "}";
+    double accountMargin = AccountInfoDouble(ACCOUNT_MARGIN);
+    string payload = "{\\\"positions\\\":" + positionsJson + ",\\\"crl_baseline\\\":" + DoubleToString(g_AccumulatedClosedProfit, 2) + ",\\\"crl_current\\\":" + DoubleToString(g_CurrentClosedProfit, 2) + ",\\\"crl_diff\\\":" + DoubleToString(diff, 2) + ",\\\"crl_budget\\\":" + DoubleToString(budgetEst, 2) + ",\\\"crl_threshold\\\":" + DoubleToString(CRLIncrementThreshold, 2) + ",\\\"equity\\\":" + DoubleToString(accountEquity, 2) + ",\\\"margin\\\":" + DoubleToString(accountMargin, 2) + "}";
     StringToCharArray(payload, post, 0, WHOLE_ARRAY, CP_UTF8);
     ArrayResize(post, StringLen(payload));
     
@@ -817,19 +893,32 @@ void ForceCloseAllMatching(long ticket, string symbolToClose) {
 }
 
 void ProcessSignal(string json) {
-    string action = ExtractJSONString(json, "action_type");
+    string action = "";
+    string signalId = ExtractJSONString(json, "id");
+    string payloadError = ExtractJSONString(json, "error");
+    string payloadMessage = ExtractJSONString(json, "message");
+
+    if(StringLen(payloadError) > 0 || StringLen(payloadMessage) > 0) {
+        Print("[MT5 PAYLOAD INFO] id=", signalId, " error=", payloadError, " message=", payloadMessage);
+    }
+
+    if(StringLen(action) == 0) action = ExtractJSONString(json, "action_type");
     if(StringLen(action) == 0) action = ExtractJSONString(json, "action");
     
     if(action == "CLOSE") {
-        long ticket = ExtractJSONLong(json, "ticket");
-        string symbolToClose = ExtractJSONString(json, "symbol");
+        long ticket = 0;
+        if(ticket == 0) ticket = ExtractJSONLong(json, "ticket");
+        string symbolToClose = "";
+        if(StringLen(symbolToClose) == 0) symbolToClose = ExtractJSONString(json, "symbol");
         Print("Processing CLOSE ticket: ", ticket, " symbol: ", symbolToClose);
         ForceCloseAllMatching(ticket, symbolToClose);
         return;
     }
 
-    string rawAsset = ExtractJSONString(json, "asset");
-    string rawSymbolExtracted = ExtractJSONString(json, "symbol");
+    string rawAsset = "";
+    string rawSymbolExtracted = "";
+    if(StringLen(rawAsset) == 0) rawAsset = ExtractJSONString(json, "asset");
+    if(StringLen(rawSymbolExtracted) == 0) rawSymbolExtracted = ExtractJSONString(json, "symbol");
     
     string chosenSource = "";
     string rawSymbol = "";
@@ -850,14 +939,21 @@ void ProcessSignal(string json) {
     Print("  payload.symbol = ", rawSymbolExtracted);
     Print("  chosen execution symbol source = ", chosenSource);
     Print("  chosen execution symbol value = ", rawSymbol);
-    string direction = ExtractJSONString(json, "direction");
-    double lotSize = ExtractJSONDouble(json, "fixedLotSize");
-    double sl = ExtractJSONDouble(json, "stopLoss");
+    string direction = "";
+    double lotSize = 0.0;
+    double sl = 0.0;
+    if(StringLen(direction) == 0) direction = ExtractJSONString(json, "direction");
+    if(lotSize <= 0.0) lotSize = ExtractJSONDouble(json, "fixedLotSize");
+    if(sl <= 0.0) sl = ExtractJSONDouble(json, "stopLoss");
     if(lotSize < 0.01) lotSize = 0.01; // FAILSAFE: minimum volume fallback
 
     // --- CHILD ORDER PARSING ---
-    int sliceIndex = (int)ExtractJSONLong(json, "sliceIndex");
-    int totalSlices = (int)ExtractJSONLong(json, "totalSlices");
+    int sliceIndex = 0;
+    int totalSlices = 1;
+    if(totalSlices <= 0) totalSlices = (int)ExtractJSONLong(json, "totalSlices");
+    if(totalSlices <= 0) totalSlices = 1;
+    if(sliceIndex < 0) sliceIndex = (int)ExtractJSONLong(json, "sliceIndex");
+    if(sliceIndex < 0) sliceIndex = 0;
     if(totalSlices <= 0) totalSlices = 1;
     string executionStyle = ExtractJSONString(json, "executionStyle");
     string routeHint = ExtractJSONString(json, "routeHint");
@@ -896,21 +992,36 @@ void ProcessSignal(string json) {
     if(!SymbolSelect(resolvedSymbol, true)) {
         Print("Centralized Entry: Failed to resolve symbol matching ", rawSymbol);
         
-        // If we picked the wrong source based on a bad extracted symbol, add a note
-        string errorCode = "BROKER_SYMBOL_NOT_RESOLVED";
-        if(StringLen(rawAsset) > 0 && rawAsset != rawSymbol) {
-             errorCode = "SYMBOL_SOURCE_MISMATCH";
-        }
-        
         // Send error callback
         string errUrl = g_WebhookURL + "/api/mt5/error";
-        string errId = ExtractJSONString(json, "id");
-        string errPayload = "{\"id\":\"" + errId + "\", \"error\":\"" + errorCode + "\", \"message\":\"تعذر مطابقة الرمز الداخلي مع رمز وسيط قابل للتداول: " + rawSymbol + "\", \"asset\":\"" + rawSymbol + "\"}";
-        char errPost[], errResult[];
-        StringToCharArray(errPayload, errPost, 0, WHOLE_ARRAY, CP_UTF8);
-        string errHeaders = "Content-Type: application/json\r\nAuthorization: Bearer " + g_SecretToken + "\r\n";
-        string errResHeaders;
-        WebRequest("POST", errUrl, errHeaders, 5000, errPost, errResult, errResHeaders);
+        string errMessage = "تعذر مطابقة الرمز الداخلي مع رمز وسيط قابل للتداول: " + rawSymbol;
+        string errPayload = StringFormat(
+           "{\"id\":\"%s\",\"error\":\"%s\",\"message\":\"%s\",\"asset\":\"%s\"}",
+           signalId,
+           "BROKER_SYMBOL_NOT_RESOLVED",
+           errMessage,
+           rawSymbol
+        );
+
+        char errPost[];
+        char errResult[];
+        string errHeaders = "Content-Type: application/json\\r\\nAuthorization: Bearer " + WebhookSecret + "\\r\\n";
+        string errResHeaders = "";
+
+        StringToCharArray(errPayload, errPost, 0, StringLen(errPayload), CP_UTF8);
+
+        int errRes = WebRequest(
+           "POST",
+           errUrl,
+           errHeaders,
+           5000,
+           errPost,
+           errResult,
+           errResHeaders
+        );
+        if(errRes != 200) {
+            Print("Failed to report /api/mt5/error, HTTP=", errRes, " LastError=", GetLastError());
+        }
         
         return;
     }

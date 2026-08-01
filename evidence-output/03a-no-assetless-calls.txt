@@ -1,0 +1,7 @@
+﻿C:\Users\Administrator\OneDrive\arkon-trading-app\src\services\TradingControlService.test.ts:30:        tradingControlService.recordExecutionSkip();
+C:\Users\Administrator\OneDrive\arkon-trading-app\src\services\TradingControlService.test.ts:31:        tradingControlService.recordExecutionSkip();
+C:\Users\Administrator\OneDrive\arkon-trading-app\src\services\TradingControlService.test.ts:32:        tradingControlService.recordExecutionSkip(); // 3rd skip
+C:\Users\Administrator\OneDrive\arkon-trading-app\src\services\TradingControlService.test.ts:45:            tradingControlService.recordExecutionDelay();
+C:\Users\Administrator\OneDrive\arkon-trading-app\src\services\TradingControlService.test.ts:60:        tradingControlService.recordExecutionSkip();
+C:\Users\Administrator\OneDrive\arkon-trading-app\src\services\TradingControlService.test.ts:61:        tradingControlService.recordExecutionSkip();
+C:\Users\Administrator\OneDrive\arkon-trading-app\src\services\TradingControlService.test.ts:62:        tradingControlService.recordExecutionSkip();

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { executionDecisionTraceService } from './ExecutionDecisionTraceService';
-import { TradingSignal } from '../types';
+import { TradingSignal, SignalDirection, SignalStrength } from '../types';
 
 describe('ExecutionDecisionTraceService', () => {
     it('should initialize with null snapshot', () => {
@@ -10,11 +10,19 @@ describe('ExecutionDecisionTraceService', () => {
     it('should record an allowed path', () => {
         const mockSignal: TradingSignal = {
             id: 'mock-1',
+            timestamp: Date.now(),
             asset: 'BTC-PERP',
-            direction: 'LONG',
-            strategy: 'TEST_STRATEGY',
+            direction: SignalDirection.LONG,
+            strategy: 'BTC_TREND',
             qualityScore: 95,
             reasoning: 'Test reason',
+            strength: SignalStrength.STRONG,
+            entry: 100,
+            stopLoss: 90,
+            takeProfit: 120,
+            tp1: 110,
+            tp2: 120,
+            details: {} as any,
             metadata: {}
         };
 
@@ -35,11 +43,19 @@ describe('ExecutionDecisionTraceService', () => {
     it('should record a blocked pre-trade path', () => {
         const mockSignal: TradingSignal = {
             id: 'mock-2',
+            timestamp: Date.now(),
             asset: 'ETH-PERP',
-            direction: 'SHORT',
-            strategy: 'TEST_STRATEGY',
+            direction: SignalDirection.SHORT,
+            strategy: 'BTC_TREND',
             qualityScore: 80,
             reasoning: 'Test reason',
+            strength: SignalStrength.STRONG,
+            entry: 100,
+            stopLoss: 90,
+            takeProfit: 120,
+            tp1: 110,
+            tp2: 120,
+            details: {} as any,
             metadata: {}
         };
 
@@ -59,11 +75,19 @@ describe('ExecutionDecisionTraceService', () => {
     it('should record a blocked trading control path', () => {
         const mockSignal: TradingSignal = {
             id: 'mock-3',
+            timestamp: Date.now(),
             asset: 'SOL-PERP',
-            direction: 'LONG',
-            strategy: 'TEST_STRATEGY',
+            direction: SignalDirection.LONG,
+            strategy: 'BTC_TREND',
             qualityScore: 90,
             reasoning: 'Test reason',
+            strength: SignalStrength.STRONG,
+            entry: 100,
+            stopLoss: 90,
+            takeProfit: 120,
+            tp1: 110,
+            tp2: 120,
+            details: {} as any,
             metadata: {}
         };
 
@@ -76,5 +100,38 @@ describe('ExecutionDecisionTraceService', () => {
         expect(snapshot?.tradingControlState).toBe('BLOCKED');
         expect(snapshot?.executionDecision?.dispatched).toBe(false);
         expect(snapshot?.executionDecision?.blockedStage).toBe('TRADING_CONTROL');
+    });
+
+    it('should attach hunter mode decision to trace', () => {
+        const mockSignal: TradingSignal = {
+            id: 'mock-4',
+            timestamp: Date.now(),
+            asset: 'BTC-PERP',
+            direction: SignalDirection.LONG,
+            strategy: 'BTC_TREND',
+            qualityScore: 99,
+            reasoning: 'Test reason',
+            strength: SignalStrength.STRONG,
+            entry: 100,
+            stopLoss: 90,
+            takeProfit: 120,
+            tp1: 110,
+            tp2: 120,
+            details: {} as any,
+            metadata: {}
+        };
+
+        executionDecisionTraceService.initTrace(mockSignal, true);
+        executionDecisionTraceService.recordHunterMode({
+            enabled: true,
+            score: 92,
+            reasons: ['signal=99'],
+            blockers: [],
+            modifiers: { sizeMultiplier: 1.25 }
+        });
+
+        const snapshot = executionDecisionTraceService.getLatestSnapshot();
+        expect(snapshot?.executionDecision?.hunterMode?.enabled).toBe(true);
+        expect(snapshot?.executionDecision?.hunterMode?.score).toBe(92);
     });
 });

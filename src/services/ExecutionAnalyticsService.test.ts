@@ -70,4 +70,20 @@ describe('ExecutionAnalyticsService', () => {
         expect(result.slippage).toBeNull();
         expect(result.slippageBps).toBeNull();
     });
+
+    it('6) Decomposes delay, execution and opportunity cost', () => {
+        const result = executionAnalyticsService.compute({
+            symbol: 'BTC-PERP', strategy: 'TREND', side: 'BUY',
+            requestedSize: 100, executedSize: 80,
+            requestedPrice: 10, executedPrice: 10.1,
+            timestamp: new Date().toISOString(),
+            executionStyle: 'PASSIVE', routeHint: 'PRIMARY'
+        });
+
+        expect(result.delayCost).toBeGreaterThan(0);
+        expect(result.executionCost).toBeGreaterThan(0);
+        expect(result.opportunityCost).toBeGreaterThan(0);
+        expect(result.implementationShortfall).toBeGreaterThan(0);
+        expect(result.strategyRegimeAttribution).toContain('TREND');
+    });
 });

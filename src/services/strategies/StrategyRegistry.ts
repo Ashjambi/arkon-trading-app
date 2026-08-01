@@ -13,6 +13,16 @@ import { ETHScalperStrategy } from "./ETH/ETH_SCALPER";
 import { VolatilityBreakoutStrategy } from "./VolatilityBreakout";
 import { CointegrationStrategy } from "./CointegrationStrategy";
 import { NewsShockStrategy } from "./NewsShockStrategy";
+import { MeanReversionAlphaStrategy } from './MeanReversionAlphaStrategy';
+import { BreakoutCaptureStrategy } from './BreakoutCaptureStrategy';
+import { ArbitrageScannerStrategy } from './ArbitrageScannerStrategy';
+import { GridTradingStrategy } from './GridTradingStrategy';
+import { GoldTrendStrategy } from './GOLD/GOLD_TREND';
+import { GoldMeanRevStrategy } from './GOLD/GOLD_MEAN_REV';
+import { GoldScalperStrategy } from './GOLD/GOLD_SCALPER';
+import { SolTrendStrategy } from './SOL/SOL_TREND';
+import { SolMeanRevStrategy } from './SOL/SOL_MEAN_REV';
+import { SolScalperStrategy } from './SOL/SOL_SCALPER';
 
 const strategyRegistry: Record<string, () => BaseStrategy> = {
     'BTC_TREND': () => new BTCTrendStrategy(),
@@ -25,8 +35,18 @@ const strategyRegistry: Record<string, () => BaseStrategy> = {
     'ETH_CORR_ARB': () => new ETHCorrArbStrategy(),
     'ETH_VOL_BREAK': () => new ETHVolBreakStrategy(),
     'ETH_SCALPER': () => new ETHScalperStrategy(),
+    'GOLD_TREND': () => new GoldTrendStrategy(),
+    'GOLD_MEAN_REV': () => new GoldMeanRevStrategy(),
+    'GOLD_SCALPER': () => new GoldScalperStrategy(),
+    'SOL_TREND': () => new SolTrendStrategy(),
+    'SOL_MEAN_REV': () => new SolMeanRevStrategy(),
+    'SOL_SCALPER': () => new SolScalperStrategy(),
     'VOLATILITY_BREAKOUT': () => new VolatilityBreakoutStrategy(),
     'COINTEGRATION': () => new CointegrationStrategy(),
+    'MEAN_REVERSION_ALPHA': () => new MeanReversionAlphaStrategy(),
+    'BREAKOUT_CAPTURE': () => new BreakoutCaptureStrategy(),
+    'ARBITRAGE_SCANNER': () => new ArbitrageScannerStrategy(),
+    'GRID_TRADING': () => new GridTradingStrategy(),
     'NEWS_SHOCK': () => new NewsShockStrategy(),
 };
 

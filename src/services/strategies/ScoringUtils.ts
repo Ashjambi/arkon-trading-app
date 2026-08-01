@@ -34,23 +34,8 @@ export const calculateTrendScore = (
   config: AppConfig,
   stratName: StrategyType,
 ): number => {
-  let gates = config.strategyGates?.[stratName] || (config as any);
-
-  // Dynamic Override for BTC to maximize trades and optimize entry success
-  if (stratName.startsWith("BTC") || state.asset.startsWith("BTC")) {
-    gates = {
-      ...gates,
-      hurst: 0.4,
-      fisher: 0.3,
-      rSquared: 0.1,
-      dvol: 15,
-      toxicity: 0.9,
-      slippage: 0.01,
-      vwapZScore: 0.5,
-      ofi: 0.05,
-      volRatio: 0.8,
-    };
-  }
+  // Use configured gates or defaults — no per-asset override
+  const gates = config.strategyGates?.[stratName] || (config as any);
   let score = 0;
 
   const hurstPassed = state.hurst >= gates.hurst;
@@ -101,23 +86,8 @@ export const calculateMeanRevScore = (
   config: AppConfig,
   stratName: StrategyType,
 ): number => {
-  let gates = config.strategyGates?.[stratName] || (config as any);
-
-  // Dynamic Override for BTC to maximize trades and optimize entry success
-  if (stratName.startsWith("BTC") || state.asset.startsWith("BTC")) {
-    gates = {
-      ...gates,
-      hurst: 0.6, // Higher for mean reversion so it triggers easily
-      fisher: 0.3,
-      rSquared: 0.1,
-      dvol: 15,
-      toxicity: 0.9,
-      slippage: 0.01,
-      vwapZScore: 0.5,
-      ofi: 0.05,
-      volRatio: 0.8,
-    };
-  }
+  // Use configured gates or defaults — no per-asset override
+  const gates = config.strategyGates?.[stratName] || (config as any);
   let score = 0;
 
   const hurstPassed = state.hurst <= 0.45; // lower is better
@@ -173,23 +143,8 @@ export const calculateBreakoutScore = (
   config: AppConfig,
   stratName: StrategyType,
 ): number => {
-  let gates = config.strategyGates?.[stratName] || (config as any);
-
-  // Dynamic Override for BTC to maximize trades and optimize entry success
-  if (stratName.startsWith("BTC") || state.asset.startsWith("BTC")) {
-    gates = {
-      ...gates,
-      hurst: 0.4,
-      fisher: 0.3,
-      rSquared: 0.1,
-      dvol: 15,
-      toxicity: 0.9,
-      slippage: 0.01,
-      vwapZScore: 0.5,
-      ofi: 0.05,
-      volRatio: 0.8,
-    };
-  }
+  // Use configured gates or defaults — no per-asset override
+  const gates = config.strategyGates?.[stratName] || (config as any);
   let score = 0;
 
   const dvolPassed = state.dvol >= gates.dvol;
@@ -243,23 +198,8 @@ export const calculateScalpScore = (
   config: AppConfig,
   stratName: StrategyType,
 ): number => {
-  let gates = config.strategyGates?.[stratName] || (config as any);
-
-  // Dynamic Override for BTC to maximize trades and optimize entry success
-  if (stratName.startsWith("BTC") || state.asset.startsWith("BTC")) {
-    gates = {
-      ...gates,
-      hurst: 0.4,
-      fisher: 0.3,
-      rSquared: 0.1,
-      dvol: 15,
-      toxicity: 0.9,
-      slippage: 0.01,
-      vwapZScore: 0.5,
-      ofi: 0.05,
-      volRatio: 0.8,
-    };
-  }
+  // Use configured gates or defaults — no per-asset override
+  const gates = config.strategyGates?.[stratName] || (config as any);
   let score = 0;
 
   const ofiPassed = Math.abs(state.liquidityGap) >= gates.ofi;
@@ -318,23 +258,8 @@ export const calculateNewsShockScore = (
   config: AppConfig,
   stratName: StrategyType,
 ): number => {
-  let gates = config.strategyGates?.[stratName] || (config as any);
-
-  // Dynamic Override for BTC to maximize trades and optimize entry success
-  if (stratName.startsWith("BTC") || state.asset.startsWith("BTC")) {
-    gates = {
-      ...gates,
-      hurst: 0.4,
-      fisher: 0.3,
-      rSquared: 0.1,
-      dvol: 15,
-      toxicity: 0.9,
-      slippage: 0.01,
-      vwapZScore: 0.5,
-      ofi: 0.05,
-      volRatio: 0.8,
-    };
-  }
+  // Use configured gates or defaults — no per-asset override
+  const gates = config.strategyGates?.[stratName] || (config as any);
   let score = 0;
 
   const dvolPassed = state.dvol >= (gates.dvol || 1) * 1.5;
@@ -413,9 +338,11 @@ export const calculateInstitutionalRisk = (
   const slDistance = volDistance * riskMultiplier;
   const tpDistance = volDistance * rewardMultiplier;
 
-  // We set stopLoss to 0 to rely strictly on the CRL (Capital Recovery Layer) budget system
-  // to close losing positions dynamically instead of hard stop losses.
-  const stopLoss = 0; 
+  // Risk managed via portfolio-level daily loss budget (CRL - Capital Recovery Layer)
+  // and RiskLimitsService.dailyLossLimitUSD — not per-trade stop losses.
+  // This prevents adverse selection by market makers and allows the
+  // budget system to dynamically close positions based on total daily PnL.
+  const stopLoss = 0;
   const takeProfit = direction === SignalDirection.LONG ? state.price + tpDistance : state.price - tpDistance;
   const tp1 = direction === SignalDirection.LONG ? state.price + (tpDistance * 0.5) : state.price - (tpDistance * 0.5);
   const tp2 = takeProfit;

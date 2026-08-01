@@ -1,12 +1,6 @@
 export const getEffectiveUrl = (url: string): string => {
-  if (!url) return "";
-  const isLocal = url.includes("127.0.0.1") || url.includes("localhost") || url.includes("localhost:3000") || url.includes("0.0.0.0");
-  const isCloudHost = typeof window !== "undefined" && window.location && window.location.origin && !window.location.origin.includes("localhost") && !window.location.origin.includes("127.0.0.1") && !window.location.origin.includes("0.0.0.0");
-  
-  if (isLocal && isCloudHost) {
-    return window.location.origin;
-  }
-  return url;
+  if (url) return url;
+  return "http://127.0.0.1:3000";
 };
 
 const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout = 60000) => {
@@ -28,15 +22,20 @@ const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout 
 
 import { logSignal } from './signalLogger';
 
+export type WebhookSendResult =
+  | { success: false; message?: string; status?: undefined; errorType?: undefined; errorMessage?: undefined }
+  | { success: false; status: number; errorType: 'http'; errorMessage: string; message?: string }
+  | { success: true; message?: string }
+  | { success: false; errorType: 'timeout' | 'network'; errorMessage: string; message?: string; status?: undefined };
+
 export const sendToWebhook = async (
   signal: any,
   url: string,
   maxAllocation: number,
   actionType: string,
   fixedLotSize: number,
-  secret: string,
   forceClosePnL: number
-) => {
+): Promise<WebhookSendResult> => {
   if (!url) return { success: false };
   await logSignal(signal);
   try {
@@ -48,6 +47,12 @@ export const sendToWebhook = async (
         mappedSymbol = 'BTCUSD';
     } else if (baseSymbol === 'ETH') {
         mappedSymbol = 'ETHUSD';
+    } else if (baseSymbol === 'SOL') {
+        mappedSymbol = 'SOLUSD';
+    } else if (baseSymbol === 'XRP') {
+        mappedSymbol = 'XRPUSD';
+    } else if (baseSymbol === 'XAU' || baseSymbol === 'GOLD' || baseSymbol.includes('XAU') || baseSymbol.includes('GOLD')) {
+        mappedSymbol = 'XAUUSD';
     }
 
     // Clean up nested objects that confuse MT5 JSON parser
@@ -71,30 +76,28 @@ export const sendToWebhook = async (
       fixedLotSize: fixedLotSize,
       lotMultiplier: signal.lotMultiplier || 1.0,
       forceClosePnL,
-      secret: secret, // Add secret to payload for bridge validation
       ...cleanSignal,
     };
-    console.log(`[Webhook] Sending payload to MT5 Bridge. Mapped Symbol: ${mappedSymbol}`, JSON.stringify(payload));
+    console.log(`[Webhook] Sending signal to MT5 Bridge. Mapped Symbol: ${mappedSymbol}`);
 
     // Use the provided url
     let effectiveUrl = getEffectiveUrl(url);
     
-    // Ensure proper formatting for external URLs
-    let finalUrl = effectiveUrl.replace(/\/$/, '') + '/api/signals';
-    console.log(`[Webhook] Attempting to send to: ${finalUrl} with secret: ${secret ? '***' : 'MISSING'}`);
+    // Ensure proper formatting for external URLs — use UI-safe endpoint, no bridge secret
+    let finalUrl = effectiveUrl.replace(/\/$/, '') + '/api/signals/ui';
+    console.log(`[Webhook] Attempting to send to: ${finalUrl}`);
 
     const response = await fetchWithTimeout(finalUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${secret}`,
       },
       body: JSON.stringify(payload),
     });
     
     if (!response.ok) {
         console.warn(`Error sending to webhook: ${url} returned status ${response.status}`);
-        return { success: false };
+        return { success: false, status: response.status, errorType: 'http' as const, errorMessage: `HTTP ${response.status}` };
     }
     
     try {
@@ -107,7 +110,12 @@ export const sendToWebhook = async (
     return { success: true };
   } catch (error: any) {
     console.warn(`Error sending to webhook to ${url}:`, error.message || error);
-    return { success: false };
+    const errorMessage = String(error?.message || error || '');
+    const lowerMsg = errorMessage.toLowerCase();
+    const errorType: 'timeout' | 'network' | 'http' = lowerMsg.includes('timeout') || lowerMsg.includes('timed out')
+        ? 'timeout'
+        : 'network';
+    return { success: false, errorType, errorMessage };
   }
 };
 

@@ -127,6 +127,15 @@ export class RiskLimitsService {
         this.snapshot.lastResetAt = new Date().toISOString();
         logStructured('SYSTEM', 'INFO', 'risk_limits_daily_reset', 'Daily limits reset completed');
     }
+
+    public updateDailyPnL(pnl: number): void {
+        this.snapshot.currentDailyPnL = pnl;
+        logStructured('SYSTEM', 'INFO', 'risk_limits_pnl_updated', `Daily PnL updated to ${pnl.toFixed(2)}`, {
+            currentDailyPnL: pnl,
+            maxDailyLoss: this.snapshot.global.maxDailyLoss,
+            exceeded: pnl <= -this.snapshot.global.maxDailyLoss
+        });
+    }
 }
 
 export const riskLimitsService = new RiskLimitsService();

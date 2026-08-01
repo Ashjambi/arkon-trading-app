@@ -6,6 +6,8 @@ export interface SanityDiagnosticReport {
     totalOpportunities: number;
     approvedCount: number;
     rejectedCount: number;
+    skippedCount: number;
+    errorCount: number;
     rejectionByStage: Record<string, number>;
     recentRejections: Array<{
         timestamp: string;
@@ -38,20 +40,22 @@ export class ExecutionSanityDiagnosticServiceImpl {
         
         let approvedCount = 0;
         let rejectedCount = 0;
+        let skippedCount = 0;
+        let errorCount = 0;
         const rejectionByStage: Record<string, number> = {};
         const recentRejections: any[] = [];
 
         for (const trace of relevantTraces) {
             const dec = trace.executionDecision;
-            if (!dec) continue;
+            if (!dec) {
+                errorCount++;
+                continue;
+            }
 
             if (dec.dispatched) {
                 approvedCount++;
             } else if (dec.attempted && !dec.dispatched) {
-                rejectedCount++;
                 const stage = dec.blockedStage || 'UNKNOWN';
-                rejectionByStage[stage] = (rejectionByStage[stage] || 0) + 1;
-                
                 let reasonCode = 'UNKNOWN';
                 let reason = dec.reason || 'Unknown reason';
 
@@ -59,14 +63,29 @@ export class ExecutionSanityDiagnosticServiceImpl {
                     reasonCode = trace.preTradeDecision.code || reasonCode;
                 }
 
-                recentRejections.push({
-                    timestamp: trace.createdAt,
-                    stage,
-                    reasonCode,
-                    reason,
-                    asset: trace.signal?.asset,
-                    strategy: trace.signal?.strategy
-                });
+                if (stage === 'EXECUTION_HINTS' || stage === 'SKIPPED' || reasonCode === 'EXECUTION_HINT_SKIP') {
+                    skippedCount++;
+                } else if (stage === 'EXECUTION_FAILED' || stage === 'BRIDGE_FAILURE' || stage === 'ERROR') {
+                    errorCount++;
+                } else {
+                    rejectedCount++;
+                }
+
+                if (stage !== 'EXECUTION_HINTS' && stage !== 'SKIPPED' && reasonCode !== 'EXECUTION_HINT_SKIP') {
+                    rejectionByStage[stage] = (rejectionByStage[stage] || 0) + 1;
+                    
+                    recentRejections.push({
+                        timestamp: trace.createdAt,
+                        stage,
+                        reasonCode,
+                        reason,
+                        asset: trace.signal?.asset,
+                        strategy: trace.signal?.strategy
+                    });
+                }
+            } else {
+                // Not attempted, not dispatched => ended early without block/dispatch => ERROR
+                errorCount++;
             }
         }
 
@@ -76,6 +95,8 @@ export class ExecutionSanityDiagnosticServiceImpl {
             totalOpportunities: relevantTraces.length,
             approvedCount,
             rejectedCount,
+            skippedCount,
+            errorCount,
             rejectionByStage,
             recentRejections: recentRejections.slice(-50) // only top 50 recent
         };

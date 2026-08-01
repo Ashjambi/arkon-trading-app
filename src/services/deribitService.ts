@@ -142,7 +142,12 @@ const setCache = (key: string, data: any) => {
 };
 // -----------------------------------
 
+const GOLD_CURRENCIES = new Set(['GOLD', 'XAUUSD', 'XAU']);
+
 export const fetchMarketSummary = async (currency: string) => {
+  // Deribit has no gold futures and direct Binance calls from the browser are geo-blocked (451/CORS) — skip both entirely.
+  if (GOLD_CURRENCIES.has(currency.toUpperCase())) return [];
+
   const cacheKey = `marketSummary_${currency}`;
   const cached = getCached(cacheKey, 30000); // Cache for 30 seconds
   if (cached) return cached;
@@ -162,13 +167,19 @@ export const fetchMarketSummary = async (currency: string) => {
   let finalResult = result;
   if (!result || result.length === 0) {
     try {
-      const symbol = currency === 'BTC' ? 'BTCUSDT' : (currency === 'ETH' ? 'ETHUSDT' : null);
+      const BINANCE_SYMBOLS: Record<string, string> = {
+        BTC: 'BTCUSDT', ETH: 'ETHUSDT', SOL: 'SOLUSDT',
+        XRP: 'XRPUSDT', GOLD: 'XAUUSDT', XAUUSD: 'XAUUSDT',
+        SOLUSD: 'SOLUSDT',
+      };
+      const symbol = BINANCE_SYMBOLS[currency] || BINANCE_SYMBOLS[currency.toUpperCase()] || null;
       if (symbol) {
         const binanceData = await fetchBinanceSummary(symbol);
         console.log(`[Binance Fallback] Data for ${symbol}:`, binanceData);
         if (binanceData) {
+          const instrumentName = ['XAUUSD', 'GOLD'].includes(currency.toUpperCase()) ? 'XAUUSD' : `${currency}-PERPETUAL`;
           finalResult = [{
-            instrument_name: `${currency}-PERPETUAL`,
+            instrument_name: instrumentName,
             last: binanceData.last,
             high: binanceData.high,
             low: binanceData.low,
@@ -201,6 +212,8 @@ export const fetchCandles = async (
   if (cached) return cached;
 
   const currency = instrument.split('-')[0];
+  // Deribit has no gold futures and direct Binance calls from the browser are geo-blocked (451/CORS) — skip both entirely.
+  if (GOLD_CURRENCIES.has(currency.toUpperCase())) return null;
 
   let result = null;
   try {
@@ -224,9 +237,14 @@ export const fetchCandles = async (
     return result;
   }
   
-  // Fallback to Binance
+  // Fallback to Binance (supports multi-asset)
   try {
-    const symbol = currency === 'BTC' ? 'BTCUSDT' : (currency === 'ETH' ? 'ETHUSDT' : null);
+    const BINANCE_SYMBOLS: Record<string, string> = {
+      BTC: 'BTCUSDT', ETH: 'ETHUSDT', SOL: 'SOLUSDT',
+      XRP: 'XRPUSDT', GOLD: 'XAUUSDT', XAUUSD: 'XAUUSDT',
+      SOLUSD: 'SOLUSDT',
+    };
+    const symbol = BINANCE_SYMBOLS[currency] || BINANCE_SYMBOLS[currency.toUpperCase()] || null;
     if (symbol) {
       let interval = '15m';
       if (resolution === '1D' || resolution === 'D' || resolution === 1440) interval = '1d';
@@ -254,6 +272,8 @@ export const fetchDailyCandles = async (instrument: string) => {
   if (cached) return cached;
 
   const currency = instrument.split('-')[0];
+  // Deribit has no gold futures and direct Binance calls from the browser are geo-blocked (451/CORS) — skip both entirely.
+  if (GOLD_CURRENCIES.has(currency.toUpperCase())) return null;
 
   const end = Date.now();
   const start = end - 365 * 24 * 60 * 60 * 1000;
@@ -280,9 +300,14 @@ export const fetchDailyCandles = async (instrument: string) => {
     return result;
   }
   
-  // Fallback to Binance
+  // Fallback to Binance (supports multi-asset)
   try {
-    const symbol = currency === 'BTC' ? 'BTCUSDT' : (currency === 'ETH' ? 'ETHUSDT' : null);
+    const BINANCE_SYMBOLS: Record<string, string> = {
+      BTC: 'BTCUSDT', ETH: 'ETHUSDT', SOL: 'SOLUSDT',
+      XRP: 'XRPUSDT', GOLD: 'XAUUSDT', XAUUSD: 'XAUUSDT',
+      SOLUSD: 'SOLUSDT',
+    };
+    const symbol = BINANCE_SYMBOLS[currency] || BINANCE_SYMBOLS[currency.toUpperCase()] || null;
     if (symbol) {
       const binanceData = await fetchBinanceCandles(symbol, '1d', 365);
       if (binanceData) {
@@ -334,6 +359,8 @@ export const fetchOrderBook = async (
   if (cached) return cached;
 
   const currency = instrument.split('-')[0];
+  // Deribit has no gold futures and direct Binance calls from the browser are geo-blocked (451/CORS) — skip both entirely.
+  if (GOLD_CURRENCIES.has(currency.toUpperCase())) return null;
 
   let result = null;
   try {
@@ -352,9 +379,14 @@ export const fetchOrderBook = async (
     return result;
   }
   
-  // Fallback to Binance if Deribit fails
+  // Fallback to Binance if Deribit fails (supports multi-asset)
   try {
-    const symbol = currency === 'BTC' ? 'BTCUSDT' : (currency === 'ETH' ? 'ETHUSDT' : null);
+    const BINANCE_SYMBOLS: Record<string, string> = {
+      BTC: 'BTCUSDT', ETH: 'ETHUSDT', SOL: 'SOLUSDT',
+      XRP: 'XRPUSDT', GOLD: 'XAUUSDT', XAUUSD: 'XAUUSDT',
+      SOLUSD: 'SOLUSDT',
+    };
+    const symbol = BINANCE_SYMBOLS[currency] || BINANCE_SYMBOLS[currency.toUpperCase()] || null;
     if (symbol) {
       const binanceData = await fetchBinanceOrderBook(symbol, depth);
       if (binanceData) {
@@ -371,6 +403,8 @@ export const fetchOrderBook = async (
 
 export const fetchHistoricalContext = async (instrument: string) => {
   const currency = instrument.split("-")[0];
+  // Deribit has no gold futures — skip the call entirely.
+  if (GOLD_CURRENCIES.has(currency.toUpperCase())) return null;
   const result = await hybridFetch(
     "public/get_historical_volatility",
     { currency },

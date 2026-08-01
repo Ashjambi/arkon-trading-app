@@ -1,8 +1,26 @@
+
 node_modules/
 build/
 dist/
 coverage/
 .DS_Store
 *.log
+order-queue.json
+order-queue.json.tmp
 .env*
 !.env.example
+
+# Legacy repair scripts (archived)
+scripts/archive/
+scripts/fix_*.ps1
+
+# Temp files
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# IDE configs
+.vscode/
+.idea/
+*.sublime-*

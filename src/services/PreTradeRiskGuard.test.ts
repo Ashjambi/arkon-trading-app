@@ -91,4 +91,14 @@ describe('PreTradeRiskGuard', () => {
         expect(result.allowed).toBe(false);
         expect(result.decisionCode).toBe('BLOCKED_CONTROL_LAYER');
     });
+
+    it('9. blocks when quantitative tail risk clamp is triggered', () => {
+        const candidate = createValidCandidate();
+        (candidate as any).tailRiskClamp = true;
+        (candidate as any).cvarUsed = -0.2;
+        (candidate as any).realizedVolatilityUsed = 0.45;
+        const result = preTradeRiskGuard.evaluate(candidate, createValidContext());
+        expect(result.allowed).toBe(false);
+        expect(result.decisionCode).toBe('BLOCKED_TAIL_RISK');
+    });
 });

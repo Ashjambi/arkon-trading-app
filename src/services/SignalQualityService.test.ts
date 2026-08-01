@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { evaluateSignalQuality } from './SignalQualityService';
+import { buildCompositeDecision, evaluateSignalQuality } from './SignalQualityService';
 
 describe('SignalQualityService', () => {
   it('LOW volatility, no stress, no execution penalty', () => {
@@ -49,5 +49,33 @@ describe('SignalQualityService', () => {
       stressScenarioEnabled: true
     });
     expect(resLow.finalQualityScore).toBe(0);
+  });
+
+  it('buildCompositeDecision creates a regime-aware execution recommendation', () => {
+    const decision = buildCompositeDecision({
+      baseQualityScore: 80,
+      regime: 'MOMENTUM_TREND',
+      hurstExponent: 0.62,
+      toxicityScore: 25,
+      estimatedSlippage: 0.25,
+      microstructureRisk: 0.2,
+      tailRiskPenalty: 0.1,
+      cvarUsed: -0.02,
+      realizedVolatilityUsed: 0.15,
+      signalStrength: 0.82,
+      sizingConfidenceOverride: 0.8,
+      crowdingRisk: 'LOW',
+      concentrationRisk: 'LOW',
+      executionRisk: 'LOW',
+      regimeConflict: false,
+      stressScenarioEnabled: false,
+      executionPenaltyFactor: 1
+    });
+
+    expect(decision.compositeScore).toBeGreaterThan(0);
+    expect(decision.recommendedExecutionStyle).toBeDefined();
+    expect(decision.regimePolicy).toBeDefined();
+    expect(decision.sizingConfidence).toBeGreaterThan(0);
+    expect(decision.executionConfidence).toBeGreaterThan(0);
   });
 });

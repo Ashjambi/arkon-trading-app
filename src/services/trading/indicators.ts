@@ -388,27 +388,107 @@ export const calculateFisherTransform = (data: number[], period: number = 10): n
   }
 };
 
+/**
+ * Calculates the Hurst Exponent using multi-scale R/S analysis.
+ * This is the statistically correct implementation:
+ * 1. Subsample at multiple time scales (τ)
+ * 2. Compute R/S for each subsample
+ * 3. Regress log(R/S) vs log(τ) — the slope is H
+ * 
+ * H < 0.45 → Mean Reverting
+ * H ≈ 0.5  → Random Walk
+ * H > 0.55 → Trending
+ */
 export const calculateHurst = (closes: number[]): number => {
   const n = closes.length;
-  if (n < 40) return 0.5;
+  if (n < 100) return 0.5; // Need sufficient data
 
-  const logReturns = [];
+  // Compute log returns
+  const logReturns: number[] = [];
   for (let i = 1; i < closes.length; i++) {
     logReturns.push(Math.log(closes[i] / closes[i - 1]));
   }
 
-  const m = mean(logReturns);
-  const centered = logReturns.map((x) => x - m);
-  const cumDev = [];
-  let currentSum = 0;
-  for (let val of centered) {
-    currentSum += val;
-    cumDev.push(currentSum);
+  const N = logReturns.length;
+  
+  // Define time scales (τ) — at least 5 scales, evenly spaced in log space
+  const minTau = Math.max(4, Math.floor(N / 64));
+  const maxTau = Math.floor(N / 4);
+  if (maxTau <= minTau) return 0.5;
+  
+  const tauValues: number[] = [];
+  const rsValues: number[] = [];
+  
+  // Use log-spaced tau values for better statistical properties
+  const logMin = Math.log(minTau);
+  const logMax = Math.log(maxTau);
+  const numScales = Math.min(8, Math.floor(maxTau - minTau + 1));
+  
+  for (let i = 0; i < numScales; i++) {
+    const tau = Math.round(Math.exp(logMin + (logMax - logMin) * i / (numScales - 1)));
+    if (tau < 2) continue;
+    
+    const numWindows = Math.floor(N / tau);
+    if (numWindows < 2) continue;
+    
+    let rsSum = 0;
+    let validWindows = 0;
+    
+    for (let w = 0; w < numWindows; w++) {
+      const start = w * tau;
+      const end = start + tau;
+      const windowReturns = logReturns.slice(start, end);
+      
+      if (windowReturns.length < 2) continue;
+      
+      // Mean-adjusted cumulative deviations
+      const windowMean = windowReturns.reduce((a, b) => a + b, 0) / windowReturns.length;
+      const deviations = windowReturns.map(r => r - windowMean);
+      
+      const cumSum: number[] = [];
+      let cs = 0;
+      for (const d of deviations) {
+        cs += d;
+        cumSum.push(cs);
+      }
+      
+      const r = Math.max(...cumSum) - Math.min(...cumSum);
+      
+      // Compute standard deviation for this window
+      const variance = deviations.reduce((sum, d) => sum + d * d, 0) / (deviations.length - 1);
+      const s = Math.sqrt(Math.max(variance, 1e-10));
+      
+      if (s > 0 && r > 0) {
+        rsSum += Math.log(r / s);
+        validWindows++;
+      }
+    }
+    
+    if (validWindows > 0) {
+      tauValues.push(Math.log(tau));
+      rsValues.push(rsSum / validWindows);
+    }
   }
-
-  const r = Math.max(...cumDev) - Math.min(...cumDev);
-  const s = stdDev(logReturns);
-
-  if (s === 0 || r === 0) return 0.5;
-  return Math.log(r / s) / Math.log(n);
+  
+  if (tauValues.length < 3) return 0.5; // Not enough data points for regression
+  
+  // Perform linear regression: log(R/S) = H * log(τ) + c
+  const nPoints = tauValues.length;
+  const meanX = tauValues.reduce((a, b) => a + b, 0) / nPoints;
+  const meanY = rsValues.reduce((a, b) => a + b, 0) / nPoints;
+  
+  let num = 0;
+  let den = 0;
+  for (let i = 0; i < nPoints; i++) {
+    const dx = tauValues[i] - meanX;
+    num += dx * (rsValues[i] - meanY);
+    den += dx * dx;
+  }
+  
+  if (den === 0) return 0.5;
+  
+  const hurst = num / den;
+  
+  // Clamp to valid range [0, 1]
+  return Math.max(0, Math.min(1, hurst));
 };

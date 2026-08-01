@@ -17,6 +17,11 @@ export type ExecutionAnalyticsSnapshot = {
     fillRatio: number;
     notionalExecuted: number | null;
     decisionLatencyMs: number | null;
+    delayCost: number | null;
+    executionCost: number | null;
+    opportunityCost: number | null;
+    implementationShortfall: number | null;
+    strategyRegimeAttribution?: string | null;
 };
 
 class ExecutionAnalyticsServiceImpl {
@@ -46,12 +51,22 @@ class ExecutionAnalyticsServiceImpl {
             notionalExecuted = input.executedSize * input.executedPrice;
         }
 
+        const delayCost = input.executionStyle === 'PASSIVE' ? Math.abs((slippage ?? 0) * 0.5) : null;
+        const executionCost = slippage !== null ? Math.abs(slippage) : null;
+        const opportunityCost = fillRatio < 1 ? Math.abs((input.requestedSize - input.executedSize) * (input.requestedPrice ?? 0) * 0.01) : null;
+        const implementationShortfall = (slippage !== null ? slippage : 0) + (opportunityCost ?? 0) + (delayCost ?? 0);
+
         return {
             slippage,
             slippageBps,
             fillRatio,
             notionalExecuted,
-            decisionLatencyMs: null
+            decisionLatencyMs: null,
+            delayCost,
+            executionCost,
+            opportunityCost,
+            implementationShortfall,
+            strategyRegimeAttribution: `${input.strategy}:${input.executionStyle}`
         };
     }
 }

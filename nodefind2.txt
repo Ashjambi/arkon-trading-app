@@ -1,0 +1,3 @@
+C:\Users\15023063\AppData\Local\ms-playwright-go\1.50.1\node.exe
+C:\Users\15023063\AppData\Local\OpenAI\Codex\bin\5b9024f90663758b\node.exe
+C:\Users\15023063\AppData\Local\Programs\Microsoft Scout\resources\node\node.exe
